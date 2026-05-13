@@ -83,7 +83,8 @@ export class Tree {
       side: this.THREE.DoubleSide,
     });
     var mesh = new this.THREE.Mesh(geo, mat);
-    mesh.rotation.x = -Math.PI / 2;
+    // Face upward (camera looks down from above at ~45deg)
+    mesh.rotation.x = Math.PI / 2;
     mesh.userData.baseOpacity = mat.opacity;
     return mesh;
   }

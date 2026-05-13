@@ -605,6 +605,21 @@
   function bindEvents() {
     currentLang = detectLang();
 
+    // Sidebar toggle (mobile)
+    var sidebarToggle = document.getElementById('sidebar-toggle');
+    var sidebar = document.querySelector('.sidebar');
+    if (sidebarToggle && sidebar) {
+      sidebarToggle.addEventListener('click', function() {
+        sidebar.classList.toggle('open');
+        sidebarToggle.classList.toggle('open');
+      });
+      // Close sidebar when clicking canvas area
+      document.getElementById('forest-canvas').addEventListener('click', function() {
+        sidebar.classList.remove('open');
+        sidebarToggle.classList.remove('open');
+      });
+    }
+
     // Language toggle
     document.getElementById('lang-toggle').addEventListener('click', function() {
       setLang(currentLang === 'en' ? 'zh' : 'en');
