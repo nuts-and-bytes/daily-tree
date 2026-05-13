@@ -417,6 +417,254 @@
       .nav-links a:not(.nav-cta) { display: none; }
       footer { flex-direction: column; gap: 1rem; text-align: center; }
     }
+  }
+
+  /* ── Growth Preview Section ─────────────────────────────────────── */
+  .growth-section {
+    padding: 6rem 2rem;
+    border-top: 1px solid var(--whisper-border);
+  }
+  .growth-inner { max-width: 1000px; margin: 0 auto; }
+
+  .growth-heading {
+    font-size: clamp(2rem, 3.5vw, 3rem);
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    line-height: 1.1;
+    margin-bottom: 1rem;
+    margin-top: 0.5rem;
+  }
+  .growth-sub {
+    font-size: 1.0625rem;
+    color: rgba(232,232,236,0.5);
+    line-height: 1.7;
+    max-width: 480px;
+    margin-bottom: 4rem;
+  }
+
+  /* Timeline */
+  .growth-timeline {
+    display: flex;
+    align-items: flex-start;
+    gap: 0;
+    margin-bottom: 5rem;
+    overflow-x: auto;
+    padding-bottom: 1rem;
+  }
+
+  .growth-stage {
+    flex: 0 0 160px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 0.75rem;
+  }
+
+  .stage-visual {
+    height: 160px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+  }
+
+  .stage-tree {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .s-trunk {
+    width: 4px;
+    background: #8B7355;
+    border-radius: 2px;
+  }
+
+  .s-crown { position: relative; }
+
+  .s-circle {
+    position: absolute;
+    border-radius: 50%;
+    background: #4A7C59;
+  }
+
+  /* Breathing animation for growth preview trees */
+  .stage-tree {
+    animation: stage-breathe 3s ease-in-out infinite;
+  }
+  #stage-week { animation-delay: 0s; }
+  #stage-month { animation-delay: 0.4s; }
+  #stage-halfyear { animation-delay: 0.8s; }
+  #stage-year { animation-delay: 1.2s; }
+
+  @keyframes stage-breathe {
+    0%, 100% { transform: scaleY(1) scaleX(1); }
+    50% { transform: scaleY(1.025) scaleX(0.98); }
+  }
+
+  .growth-connector {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding-top: 80px;
+    min-width: 40px;
+  }
+
+  .connector-line {
+    width: 100%;
+    height: 1px;
+    background: linear-gradient(to right, rgba(74,124,89,0.3), rgba(74,124,89,0.3));
+    position: relative;
+  }
+
+  .connector-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: rgba(74,124,89,0.5);
+    margin-top: -3px;
+  }
+
+  .stage-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.6875rem;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgba(232,232,236,0.5);
+  }
+
+  .stage-count {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.625rem;
+    color: rgba(232,232,236,0.25);
+    letter-spacing: 0.04em;
+  }
+
+  .stage-desc {
+    font-size: 0.8125rem;
+    color: rgba(232,232,236,0.35);
+    line-height: 1.55;
+    max-width: 130px;
+  }
+
+  .stage-state {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.5625rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 0.2rem 0.6rem;
+    border-radius: 9999px;
+  }
+
+  .state-living {
+    background: rgba(74,124,89,0.12);
+    border: 1px solid rgba(74,124,89,0.25);
+    color: #6B9B7A;
+  }
+
+  /* Tree States Section */
+  .states-section { border-top: 1px solid var(--whisper-border); padding-top: 4rem; }
+
+  .states-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.6875rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: rgba(232,232,236,0.3);
+    margin-bottom: 2.5rem;
+  }
+
+  .states-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 1.5rem;
+  }
+
+  .state-card {
+    padding: 2rem;
+    background: var(--forest-floor);
+    border: 1px solid var(--whisper-border);
+    border-radius: 1rem;
+    display: flex;
+    gap: 1.5rem;
+    align-items: flex-start;
+    transition: border-color 0.2s;
+  }
+  .state-card:hover { border-color: rgba(255,255,255,0.1); }
+
+  .state-icon { flex-shrink: 0; }
+
+  .state-icon-tree {
+    width: 28px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .si-trunk {
+    width: 3px;
+    height: 24px;
+    background: #8B7355;
+    border-radius: 2px;
+  }
+  .si-circle {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #4A7C59;
+    margin-top: -10px;
+    animation: si-breathe 3s ease-in-out infinite;
+  }
+  .state-icon-tree.dormant .si-circle {
+    background: #3D4F5F;
+    animation: none;
+    opacity: 0.5;
+  }
+  .state-icon-tree.archived .si-circle {
+    background: #555555;
+    animation: none;
+    opacity: 0.3;
+  }
+  .state-icon-tree.dormant .si-trunk { background: #3D4F5F; }
+  .state-icon-tree.archived .si-trunk { background: #555555; }
+
+  @keyframes si-breathe {
+    0%, 100% { transform: scale(1); opacity: 0.8; }
+    50% { transform: scale(1.06); opacity: 1; }
+  }
+
+  .state-card-title {
+    font-size: 0.9375rem;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .state-dot {
+    display: inline-block;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+  }
+  .state-living-dot { background: #4A7C59; box-shadow: 0 0 6px rgba(74,124,89,0.6); }
+  .state-dormant-dot { background: #3D4F5F; }
+  .state-archived-dot { background: #555555; }
+
+  .state-card-content p {
+    font-size: 0.8125rem;
+    color: rgba(232,232,236,0.4);
+    line-height: 1.65;
+  }
+
+  @media (max-width: 768px) {
+    .growth-timeline { gap: 0; }
+    .growth-stage { flex: 0 0 130px; }
+    .states-grid { grid-template-columns: 1fr; }
+  }
   </style>
 </head>
 <body>
@@ -428,7 +676,7 @@
     </a>
     <div class="nav-links">
       <a href="#features">Features</a>
-      <a href="#demo">Demo</a>
+      <a href="#growth">Growth</a>
       <a href="https://github.com/zhuxinyao99-jpg/daily-tree" target="_blank">GitHub</a>
       <a href="app/" class="nav-cta">Open App</a>
     </div>
@@ -484,38 +732,146 @@
     </div>
   </section>
 
-  <section class="demo-section" id="demo">
-    <div class="demo-inner">
-      <div class="demo-header">
-        <div>
-          <div class="section-label">The app</div>
-          <h2>A forest is personal by nature</h2>
+  <!-- Growth Preview Section -->
+  <section class="growth-section" id="growth">
+    <div class="growth-inner">
+      <div class="section-label">What your forest becomes</div>
+      <h2 class="growth-heading">One year of moments.<br>Visible.</h2>
+      <p class="growth-sub">Every entry adds a ring. Every ring changes the shape. Here is what consistency looks like.</p>
+
+      <!-- Timeline -->
+      <div class="growth-timeline">
+        <!-- Week -->
+        <div class="growth-stage">
+          <div class="stage-visual">
+            <div class="stage-tree" id="stage-week">
+              <div class="s-trunk" style="height:28px"></div>
+              <div class="s-crown">
+                <div class="s-circle" style="width:18px;height:18px;top:-8px;left:-7px;opacity:0.5"></div>
+                <div class="s-circle" style="width:12px;height:12px;top:-5px;left:2px;opacity:0.4"></div>
+              </div>
+            </div>
+          </div>
+          <div class="stage-label">1 week</div>
+          <div class="stage-count">7 entries</div>
+          <div class="stage-desc">A tiny seedling. The beginning of a habit.</div>
+          <div class="stage-state state-living">Living</div>
         </div>
-        <p>No social feed. No shares. Just you and your growing archive. Every tree tells the story of a year.</p>
+
+        <!-- Month -->
+        <div class="growth-connector">
+          <div class="connector-line"></div>
+          <div class="connector-dot"></div>
+        </div>
+
+        <!-- Month -->
+        <div class="growth-stage">
+          <div class="stage-visual">
+            <div class="stage-tree" id="stage-month">
+              <div class="s-trunk" style="height:52px"></div>
+              <div class="s-crown">
+                <div class="s-circle" style="width:36px;height:36px;top:-16px;left:-16px;opacity:0.65"></div>
+                <div class="s-circle" style="width:26px;height:26px;top:-12px;left:0px;opacity:0.55"></div>
+                <div class="s-circle" style="width:18px;height:18px;top:-8px;left:-12px;opacity:0.45"></div>
+              </div>
+            </div>
+          </div>
+          <div class="stage-label">1 month</div>
+          <div class="stage-count">30 entries</div>
+          <div class="stage-desc">A proper young tree. Breathing. Growing.</div>
+          <div class="stage-state state-living">Living</div>
+        </div>
+
+        <!-- Connector -->
+        <div class="growth-connector">
+          <div class="connector-line"></div>
+          <div class="connector-dot"></div>
+        </div>
+
+        <!-- Half Year -->
+        <div class="growth-stage">
+          <div class="stage-visual">
+            <div class="stage-tree" id="stage-halfyear">
+              <div class="s-trunk" style="height:76px"></div>
+              <div class="s-crown">
+                <div class="s-circle" style="width:48px;height:48px;top:-22px;left:-22px;opacity:0.7"></div>
+                <div class="s-circle" style="width:36px;height:36px;top:-16px;left:-2px;opacity:0.6"></div>
+                <div class="s-circle" style="width:28px;height:28px;top:-12px;left:-18px;opacity:0.5"></div>
+                <div class="s-circle" style="width:20px;height:20px;top:-8px;left:4px;opacity:0.4"></div>
+              </div>
+            </div>
+          </div>
+          <div class="stage-label">6 months</div>
+          <div class="stage-count">~180 entries</div>
+          <div class="stage-desc">A tree with real presence. You can feel it in the space.</div>
+          <div class="stage-state state-living">Living</div>
+        </div>
+
+        <!-- Connector -->
+        <div class="growth-connector">
+          <div class="connector-line"></div>
+          <div class="connector-dot"></div>
+        </div>
+
+        <!-- Year -->
+        <div class="growth-stage">
+          <div class="stage-visual">
+            <div class="stage-tree" id="stage-year">
+              <div class="s-trunk" style="height:96px"></div>
+              <div class="s-crown">
+                <div class="s-circle" style="width:58px;height:58px;top:-28px;left:-27px;opacity:0.75"></div>
+                <div class="s-circle" style="width:44px;height:44px;top:-20px;left:-4px;opacity:0.65"></div>
+                <div class="s-circle" style="width:34px;height:34px;top:-15px;left:-22px;opacity:0.55"></div>
+                <div class="s-circle" style="width:24px;height:24px;top:-10px;left:4px;opacity:0.45"></div>
+                <div class="s-circle" style="width:16px;height:16px;top:-6px;left:-14px;opacity:0.35"></div>
+              </div>
+            </div>
+          </div>
+          <div class="stage-label">1 full year</div>
+          <div class="stage-count">365 entries</div>
+          <div class="stage-desc">A fully grown tree. Your first complete year, preserved.</div>
+          <div class="stage-state state-living">Living</div>
+        </div>
       </div>
-      <div class="demo-window">
-        <div class="demo-titlebar">
-          <div class="demo-dot red"></div>
-          <div class="demo-dot yellow"></div>
-          <div class="demo-dot green"></div>
-          <div class="demo-url">dailytree.app / app</div>
-        </div>
-        <div class="demo-content">
-          <div class="mini-forest">
-            <div class="mini-tree">
-              <div class="mini-crown"><div class="mini-circle"></div><div class="mini-circle"></div><div class="mini-circle"></div></div>
-              <div class="mini-trunk"></div>
-              <span class="mini-year">2023</span>
+
+      <!-- Tree States Explanation -->
+      <div class="states-section">
+        <div class="states-label">What your trees tell you</div>
+        <div class="states-grid">
+          <div class="state-card state-living-card">
+            <div class="state-icon">
+              <div class="state-icon-tree">
+                <div class="si-trunk"></div>
+                <div class="si-circle"></div>
+              </div>
             </div>
-            <div class="mini-tree">
-              <div class="mini-crown"><div class="mini-circle"></div><div class="mini-circle"></div></div>
-              <div class="mini-trunk"></div>
-              <span class="mini-year">2024</span>
+            <div class="state-card-content">
+              <div class="state-card-title">Living <span class="state-dot state-living-dot"></span></div>
+              <p>Active within the last 14 days. The tree breathes. You are present.</p>
             </div>
-            <div class="mini-tree">
-              <div class="mini-crown"><div class="mini-circle"></div><div class="mini-circle"></div><div class="mini-circle"></div></div>
-              <div class="mini-trunk"></div>
-              <span class="mini-year">2025</span>
+          </div>
+          <div class="state-card state-dormant-card">
+            <div class="state-icon">
+              <div class="state-icon-tree dormant">
+                <div class="si-trunk"></div>
+                <div class="si-circle"></div>
+              </div>
+            </div>
+            <div class="state-card-content">
+              <div class="state-card-title">Dormant <span class="state-dot state-dormant-dot"></span></div>
+              <p>14–30 days without a new entry. The tree is resting. You can come back.</p>
+            </div>
+          </div>
+          <div class="state-card state-archived-card">
+            <div class="state-icon">
+              <div class="state-icon-tree archived">
+                <div class="si-trunk"></div>
+                <div class="si-circle"></div>
+              </div>
+            </div>
+            <div class="state-card-content">
+              <div class="state-card-title">Archived <span class="state-dot state-archived-dot"></span></div>
+              <p>Over 30 days. The year is closed. The tree stays, preserving that time.</p>
             </div>
           </div>
         </div>

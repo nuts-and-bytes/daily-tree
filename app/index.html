@@ -6,11 +6,17 @@
   <title>Daily Tree — Watch your life grow in rings</title>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
+  <!-- Load Three.js as global BEFORE modules parse their `import * as THREE from 'three'` -->
+  <script src="webgl/three.js"></script>
+  <script>
+    // Ensure THREE is available before any ES module imports it
+    if (typeof THREE !== 'undefined') window.THREE = THREE;
+  </script>
 </head>
 <body>
 
 <div class="app">
-  <!-- Sidebar -->
+  <!-- ── Sidebar ── -->
   <aside class="sidebar">
     <div class="sidebar-top">
       <a href="../index.html" class="sidebar-logo">
@@ -30,24 +36,37 @@
     <p class="sidebar-hint" data-i18n="sidebarHint">Click a year to read. Click + to record today.</p>
   </aside>
 
-  <!-- Main Forest Canvas -->
+  <!-- ── Main Canvas Area ── -->
   <main class="main-canvas">
     <canvas id="forest-canvas"></canvas>
 
+    <!-- Year Ring Nav (top-left of canvas) -->
+    <div class="year-nav" id="year-nav">
+      <!-- populated by JS: concentric ring with year labels -->
+    </div>
+
+    <!-- Today Status (top-right of canvas) -->
+    <div class="today-status" id="today-status">
+      <div class="today-status-ring" id="today-dot">
+        <div class="ring-fill"></div>
+      </div>
+      <span class="today-status-msg" id="today-msg" data-i18n="todayNotRecorded">Today's tree hasn't grown yet.</span>
+    </div>
+
     <!-- Empty forest hint -->
     <div class="forest-hint" id="forest-hint">
-      <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
-        <circle cx="24" cy="24" r="6" fill="#4A7C59" opacity="0.5"/>
-        <circle cx="24" cy="24" r="14" stroke="#4A7C59" stroke-width="1" opacity="0.2"/>
-        <circle cx="24" cy="24" r="22" stroke="#4A7C59" stroke-width="0.5" opacity="0.1"/>
+      <svg width="56" height="56" viewBox="0 0 56 56" fill="none">
+        <circle cx="28" cy="28" r="7" fill="#4A7C59" opacity="0.5"/>
+        <circle cx="28" cy="28" r="16" stroke="#4A7C59" stroke-width="1" opacity="0.2"/>
+        <circle cx="28" cy="28" r="25" stroke="#4A7C59" stroke-width="0.5" opacity="0.1"/>
       </svg>
       <p class="forest-hint-title" data-i18n="emptyForestTitle">Start your forest</p>
-      <p class="forest-hint-desc" data-i18n="emptyForestDesc">Click + to write your first entry. A tree will grow from nothing.</p>
+      <p class="forest-hint-desc" data-i18n="emptyForestDesc">Click + to write your first entry.</p>
     </div>
   </main>
 </div>
 
-<!-- FAB -->
+<!-- ── FAB ── -->
 <button class="fab" id="fab-new" title="New entry (Ctrl+N)">
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
     <line x1="12" y1="5" x2="12" y2="19"/>
@@ -55,7 +74,7 @@
   </svg>
 </button>
 
-<!-- Entry Modal -->
+<!-- ── Entry Modal ── -->
 <div class="modal-overlay" id="modal-overlay">
   <div class="modal-card">
     <div class="modal-header">
@@ -67,7 +86,7 @@
         </svg>
       </button>
     </div>
-    <label class="modal-label" for="entry-text" data-i18n="whatMattersToday">What matters most today?</label>
+    <label class="modal-label" id="modal-label" for="entry-text" data-i18n="whatMattersToday">What's the single most important thing today?</label>
     <textarea
       class="modal-textarea"
       id="entry-text"
@@ -90,7 +109,7 @@
   </div>
 </div>
 
-<!-- Year Detail Panel -->
+<!-- ── Year Detail Panel ── -->
 <div class="year-panel" id="year-panel">
   <div class="panel-header">
     <span class="panel-title" id="panel-title">2025</span>
@@ -106,7 +125,7 @@
   </ul>
 </div>
 
-<!-- Guide Overlay -->
+<!-- ── Guide Overlay ── -->
 <div class="guide-overlay" id="guide-overlay">
   <div class="guide-card">
     <div class="guide-header">
@@ -122,7 +141,7 @@
     <p class="guide-step-desc" id="guide-step-desc">Click the + button to record the single most important thing that happened today.</p>
     <div class="guide-actions">
       <button class="guide-skip" id="guide-skip">Skip</button>
-      <button class="guide-next" id="guide-next">Try it now</button>
+      <button class="guide-next" id="guide-next">Start now</button>
     </div>
   </div>
 </div>

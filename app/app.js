@@ -7,6 +7,7 @@
   const GUIDE_KEY = 'daily_tree_guide_seen';
   const LANG_KEY = 'daily_tree_lang';
   const YEARS_TO_SHOW = 5;
+  const TODAY_CHECK_KEY = 'daily_tree_today_done';
 
   // ── i18n ────────────────────────────────────────────────────────────────
 
@@ -14,67 +15,85 @@
     en: {
       years: 'Years',
       sidebarHint: 'Click a year to read. Click + to record today.',
-      entries: 'entries',
-      entry: 'entry',
-      whatMattersToday: 'What matters most today?',
+      entries: 'entries', entry: 'entry',
+      whatMattersToday: "What's the single most important thing today?",
       placeholder: 'One moment. One thought. One thing worth remembering...',
       charCount: '/ 500',
       ctrlEnter: 'Ctrl+Enter to save',
       saveEntry: 'Save',
       close: 'Close',
-      noEntries: 'No entries yet. Click + to start.',
+      noEntries: 'No entries yet.',
       saved: 'Saved! Your tree just grew.',
       emptyError: 'Write something first.',
+      // Guide
       guideTitle: 'How it works',
       guideStep1Title: 'One moment a day',
       guideStep1Desc: 'Click the + button to record the single most important thing that happened today.',
       guideStep2Title: 'Your tree grows',
-      guideStep2Desc: "Each entry makes the current year's tree taller and fuller. Watch your forest accumulate.",
+      guideStep2Desc: "Each entry makes this year's tree taller and fuller. Living trees breathe. Dormant trees wait.",
       guideStep3Title: 'Click to revisit',
-      guideStep3Desc: 'Click any tree to read all entries from that year. The forest remembers everything.',
+      guideStep3Desc: 'Click any tree to read that year. The forest remembers everything — your wins and your silences.',
       gotIt: 'Got it',
-      tryIt: 'Try it now',
+      tryIt: 'Start now',
       emptyForestTitle: 'Start your forest',
-      emptyForestDesc: 'Click + to write your first entry. A tree will grow from nothing.',
+      emptyForestDesc: 'Click + to write your first entry.',
+      // Today reminders
+      todayNotRecorded: "Today's tree hasn't grown yet.",
+      todayRecorded: "Today's tree is growing!",
+      editEntry: 'Edit today\'s entry',
+      addEntry: 'Record today',
+      // Tree states
+      livingTree: 'Living tree — active this year',
+      dormantTree: 'Dormant tree — took a break',
+      archivedTree: 'Archived tree — that year is closed',
     },
     zh: {
       years: '年份',
       sidebarHint: '点击年份查看记录。点击 + 记录今天。',
-      entries: '条记录',
-      entry: '条记录',
+      entries: '条记录', entry: '条记录',
       whatMattersToday: '今天最重要的一件事是什么？',
       placeholder: '一个瞬间，一个想法，一件值得记住的事……',
       charCount: '/ 500',
       ctrlEnter: 'Ctrl+回车 保存',
       saveEntry: '保存',
       close: '关闭',
-      noEntries: '还没有记录。点击 + 开始。',
-      saved: '已保存！你的树刚刚长大了一点。',
+      noEntries: '还没有记录。',
+      saved: '已保存！你的树长大了一点。',
       emptyError: '先写点什么吧。',
+      // Guide
       guideTitle: '使用指南',
       guideStep1Title: '每天一个瞬间',
       guideStep1Desc: '点击 + 按钮，记录今天最重要的那件事。',
       guideStep2Title: '树会成长',
-      guideStep2Desc: '每一条记录，都让今年的树长高一点。看着你的森林慢慢积累。',
+      guideStep2Desc: '每一条记录都让今年的树长高一些。活着的树在呼吸，沉睡的树在等待。',
       guideStep3Title: '点击回顾',
       guideStep3Desc: '点击任意一棵树，可以看到那一年的所有记录。森林记得一切。',
       gotIt: '明白了',
       tryIt: '开始记录',
       emptyForestTitle: '开始你的森林',
-      emptyForestDesc: '点击 + 写下第一条记录，一棵树就会从无到有。',
+      emptyForestDesc: '点击 + 写下第一条记录。',
+      // Today reminders
+      todayNotRecorded: '今天的小树还没有成长哦。',
+      todayRecorded: '今天已记录，小树在成长！',
+      editEntry: '修改今天的记录',
+      addEntry: '记录今天',
+      // Tree states
+      livingTree: '活着的树 — 今年还在生长',
+      dormantTree: '沉睡的树 — 按下了暂停',
+      archivedTree: '归档的树 — 那一年结束了',
     },
   };
 
   let currentLang = 'en';
 
   function t(key) {
-    return (I18N[currentLang] && I18N[currentLang][key]) || I18N.en[key] || key;
+    return (I18N[currentLang] && I18N[currentLang][key]) || (I18N.en && I18N.en[key]) || key;
   }
 
   function detectLang() {
-    const stored = localStorage.getItem(LANG_KEY);
+    var stored = localStorage.getItem(LANG_KEY);
     if (stored) return stored;
-    const browser = navigator.language || 'en';
+    var browser = navigator.language || 'en';
     return browser.startsWith('zh') ? 'zh' : 'en';
   }
 
@@ -86,27 +105,47 @@
 
   function applyLang() {
     document.querySelectorAll('[data-i18n]').forEach(function(el) {
-      var key = el.getAttribute('data-i18n');
-      el.textContent = t(key);
+      el.textContent = t(el.getAttribute('data-i18n'));
     });
     document.querySelectorAll('[data-i18n-placeholder]').forEach(function(el) {
-      var key = el.getAttribute('data-i18n-placeholder');
-      el.placeholder = t(key);
+      el.placeholder = t(el.getAttribute('data-i18n-placeholder'));
     });
   }
 
   // ── Data Layer ────────────────────────────────────────────────────────────
 
   function loadEntries() {
-    try {
-      return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
-    } catch (e) {
-      return {};
-    }
+    try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'); }
+    catch (e) { return {}; }
   }
 
   function saveEntries(entries) {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(entries));
+  }
+
+  function getTodayKey() {
+    var d = new Date();
+    return d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate();
+  }
+
+  function hasTodayEntry() {
+    var entries = loadEntries();
+    var year = new Date().getFullYear();
+    var yearEntries = entries[year] || [];
+    var today = getTodayKey();
+    return yearEntries.some(function(e) {
+      return e.date && e.date.substring(0, 10) === today;
+    });
+  }
+
+  function getTodayEntry() {
+    var entries = loadEntries();
+    var year = new Date().getFullYear();
+    var yearEntries = entries[year] || [];
+    var today = getTodayKey();
+    return yearEntries.find(function(e) {
+      return e.date && e.date.substring(0, 10) === today;
+    }) || null;
   }
 
   function addEntry(year, text) {
@@ -121,56 +160,86 @@
     return entries[year];
   }
 
+  function updateEntry(entryId, newText) {
+    var entries = loadEntries();
+    var found = false;
+    for (var y in entries) {
+      var arr = entries[y];
+      for (var i = 0; i < arr.length; i++) {
+        if (arr[i].id === entryId) {
+          arr[i].text = newText.slice(0, 500);
+          found = true;
+          break;
+        }
+      }
+      if (found) break;
+    }
+    if (found) saveEntries(entries);
+    return found;
+  }
+
   function getYearEntries(year) {
     return (loadEntries()[year] || []);
   }
 
-  // ── Feedback Animations ───────────────────────────────────────────────────
+  // ── Visual Feedback ───────────────────────────────────────────────────
 
-  function showSaveSuccess() {
-    // Floating "+1" on canvas
+  function showSaveSuccess(tree) {
     var canvas = document.getElementById('forest-canvas');
     var floater = document.createElement('div');
     floater.className = 'save-floater';
     floater.textContent = '+1';
     var cx = canvas.clientWidth / 2;
-    var cy = canvas.clientHeight / 2 - 50;
     floater.style.left = cx + 'px';
-    floater.style.top = cy + 'px';
+    floater.style.top = (canvas.clientHeight / 2 - 60) + 'px';
     canvas.parentElement.appendChild(floater);
+    setTimeout(function() { floater.remove(); }, 2000);
 
-    // Tree growth animation
-    if (window.forestScene && window.currentYearTree) {
-      window.forestScene.growTree(window.currentYearTree);
+    if (window._forestScene && tree) {
+      window._forestScene.growTree(tree);
+    } else if (window._forestScene && window._currentYearTree) {
+      window._forestScene.growTree(window._currentYearTree);
     }
 
-    // Particles
-    spawnParticles(cx, cy + 100);
+    spawnParticles(cx, canvas.clientHeight / 2 + 50);
 
-    // Toast
-    setTimeout(function() { showToast(t('saved')); }, 600);
-
-    setTimeout(function() { floater.remove(); }, 2000);
+    setTimeout(function() { showToast(t('saved')); }, 300);
+    updateTodayIndicator();
   }
 
   function spawnParticles(x, y) {
     var container = document.querySelector('.main-canvas');
     var colors = ['#4A7C59', '#6B9B7A', '#C4A77D', '#8B7355'];
-    for (var i = 0; i < 14; i++) {
+    for (var i = 0; i < 12; i++) {
       var p = document.createElement('div');
       p.className = 'particle';
-      var angle = (Math.PI * 2 * i) / 14 + Math.random() * 0.3;
-      var dist = 60 + Math.random() * 80;
-      var color = colors[Math.floor(Math.random() * colors.length)];
+      var angle = (Math.PI * 2 * i) / 12 + Math.random() * 0.3;
+      var dist = 50 + Math.random() * 70;
       p.style.cssText = [
-        'left:' + x + 'px',
-        'top:' + y + 'px',
-        'background:' + color,
+        'left:' + x + 'px', 'top:' + y + 'px',
+        'background:' + colors[i % colors.length],
         '--tx:' + (Math.cos(angle) * dist) + 'px',
-        '--ty:' + (Math.sin(angle) * dist - 40) + 'px'
+        '--ty:' + (Math.sin(angle) * dist - 30) + 'px'
       ].join(';');
       container.appendChild(p);
-      setTimeout(function(pp) { pp.remove(); }, 1000, p);
+      setTimeout(function(pp) { pp.remove(); }, 900, p);
+    }
+  }
+
+  // ── Today Indicator ───────────────────────────────────────────────────
+
+  function updateTodayIndicator() {
+    var dot = document.getElementById('today-dot');
+    var msg = document.getElementById('today-msg');
+    if (!dot || !msg) return;
+
+    var today = getTodayEntry();
+    if (today) {
+      dot.classList.add('recorded');
+      msg.textContent = t('todayRecorded');
+    } else {
+      dot.classList.remove('recorded');
+      msg.textContent = t('todayNotRecorded');
     }
   }
 
@@ -190,14 +259,13 @@
     toast._timeout = setTimeout(function() { toast.classList.remove('visible'); }, 3500);
   }
 
-  // ── Guide Overlay ────────────────────────────────────────────────────────
+  // ── Guide ──────────────────────────────────────────────────────────────
 
   var guideStep = 0;
 
   function showGuide() {
     if (localStorage.getItem(GUIDE_KEY)) return;
-    var overlay = document.getElementById('guide-overlay');
-    overlay.classList.add('active');
+    document.getElementById('guide-overlay').classList.add('active');
     guideStep = 0;
     updateGuideStep(0);
   }
@@ -208,30 +276,22 @@
       { num: '02', title: t('guideStep2Title'), desc: t('guideStep2Desc') },
       { num: '03', title: t('guideStep3Title'), desc: t('guideStep3Desc') },
     ];
-
     var s = steps[step];
     document.getElementById('guide-num').textContent = s.num;
     document.getElementById('guide-step-title').textContent = s.title;
     document.getElementById('guide-step-desc').textContent = s.desc;
-
-    var dots = document.querySelectorAll('.guide-dot');
-    dots.forEach(function(d, i) { d.classList.toggle('active', i === step); });
-
+    document.querySelectorAll('.guide-dot').forEach(function(d, i) {
+      d.classList.toggle('active', i === step);
+    });
     var nextBtn = document.getElementById('guide-next');
-    if (step < steps.length - 1) {
-      nextBtn.textContent = step === 0 ? t('tryIt') : 'Next';
-    } else {
-      nextBtn.textContent = t('gotIt');
-    }
+    nextBtn.textContent = step < steps.length - 1
+      ? (step === 0 ? t('tryIt') : 'Next')
+      : t('gotIt');
   }
 
   function nextGuideStep() {
-    if (guideStep < 2) {
-      guideStep++;
-      updateGuideStep(guideStep);
-    } else {
-      closeGuide();
-    }
+    if (guideStep < 2) { guideStep++; updateGuideStep(guideStep); }
+    else { closeGuide(); }
   }
 
   function closeGuide() {
@@ -240,25 +300,38 @@
     guideStep = 0;
   }
 
-  function toggleLang() {
-    setLang(currentLang === 'en' ? 'zh' : 'en');
-  }
-
   // ── Modal ─────────────────────────────────────────────────────────────────
 
-  function openModal(year) {
+  var _currentEditEntry = null; // null = new entry, else = entry object to edit
+
+  function openModal(year, entryToEdit) {
+    _currentEditEntry = entryToEdit || null;
     var overlay = document.getElementById('modal-overlay');
     var textarea = document.getElementById('entry-text');
-    document.getElementById('modal-year').textContent = year;
-    textarea.value = '';
-    document.getElementById('char-count').textContent = '0';
-    document.getElementById('entry-submit').disabled = false;
+    var submitBtn = document.getElementById('entry-submit');
+    var yearLabel = document.getElementById('modal-year');
+    var modalLabel = document.getElementById('modal-label');
+
+    yearLabel.textContent = year;
+    textarea.value = entryToEdit ? entryToEdit.text : '';
+    document.getElementById('char-count').textContent = textarea.value.length;
+
+    if (entryToEdit) {
+      modalLabel.textContent = t('editEntry');
+      submitBtn.textContent = t('saveEntry') + ' ✓';
+    } else {
+      modalLabel.textContent = t('whatMattersToday');
+      submitBtn.innerHTML = '<span data-i18n="saveEntry">' + t('saveEntry') + '</span>' +
+        '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
+    }
+
     overlay.classList.add('active');
     setTimeout(function() { textarea.focus(); }, 100);
   }
 
   function closeModal() {
     document.getElementById('modal-overlay').classList.remove('active');
+    _currentEditEntry = null;
   }
 
   function submitEntry(year) {
@@ -269,61 +342,97 @@
       textarea.focus();
       return;
     }
-    document.getElementById('entry-submit').disabled = true;
-    addEntry(year, text);
-    closeModal();
-    refreshForest();
-    setTimeout(showSaveSuccess, 100);
+
+    if (_currentEditEntry) {
+      updateEntry(_currentEditEntry.id, text);
+      showToast(t('saved'));
+      closeModal();
+      refreshForest();
+    } else {
+      // Save first, then grow tree, then refresh
+      addEntry(year, text);
+      closeModal();
+      var tree = refreshForest();
+      if (tree) {
+        window._currentYearTree = tree;
+        showSaveSuccess(tree);
+      } else {
+        refreshForest();
+      }
+    }
   }
 
   // ── Forest ─────────────────────────────────────────────────────────────────
 
   var forestScene = null;
   var selectedYear = null;
+  var SceneModuleRef = null;
+  var TreeModuleRef = null;
+
+  function isForestReady() { return forestScene !== null; }
+
+// ── Forest ─────────────────────────────────────────────────────────────────
+
+  var forestScene = null;
+  var selectedYear = null;
+  var SceneModuleRef = null;
+  var TreeModuleRef = null;
+
+  function isForestReady() { return forestScene !== null; }
 
   async function initForest() {
     var canvas = document.getElementById('forest-canvas');
     if (!canvas) return;
 
-    var SceneModule = await import('./webgl/scene.js');
-    var TreeModule = await import('./webgl/tree.js');
+    // THREE must be loaded and set on window before importing scene/tree modules
+    // (those files use: import * as THREE from 'three')
+    if (!window.THREE) {
+      var threeModule = await import('https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js');
+      window.THREE = threeModule;
+    }
 
-    forestScene = new SceneModule.ForestScene(canvas);
-    window.forestScene = forestScene;
-    window.TreeClass = TreeModule.Tree;
+    SceneModuleRef = await import('./webgl/scene.js');
+    TreeModuleRef = await import('./webgl/tree.js');
+
+    forestScene = new SceneModuleRef.ForestScene(canvas);
+    window._forestScene = forestScene;
 
     refreshForest();
+    updateTodayIndicator();
     updateEmptyHint();
   }
 
   function refreshForest() {
-    if (!forestScene) return;
+    if (!forestScene || !TreeModuleRef) return null;
     var entries = loadEntries();
     var currentYear = new Date().getFullYear();
     var years = [];
-    for (var i = 0; i < YEARS_TO_SHOW; i++) {
-      years.push(currentYear - i);
-    }
+    for (var i = 0; i < YEARS_TO_SHOW; i++) { years.push(currentYear - i); }
 
     forestScene.removeAllTrees();
 
+    var currentTree = null;
     years.forEach(function(year) {
       var yearEntries = entries[year] || [];
       var lastDate = yearEntries.length > 0
         ? yearEntries[yearEntries.length - 1].date
         : year + '-01-01T00:00:00';
 
-      var tree = forestScene.addTree(window.TreeClass, year, yearEntries.length, {
+      var tree = forestScene.addTree(TreeModuleRef.Tree, year, yearEntries.length, {
         lastEntryDate: lastDate,
       });
 
       if (year === currentYear) {
-        window.currentYearTree = tree;
+        currentTree = tree;
+        window._currentYearTree = tree;
       }
     });
 
     updateSidebar(entries, years);
+    updateTodayIndicator();
     updateEmptyHint();
+    renderYearNav(years, selectedYear);
+    return currentTree;
   }
 
   function updateEmptyHint() {
@@ -334,6 +443,42 @@
     hint.style.display = total === 0 ? 'flex' : 'none';
   }
 
+  // ── Year Ring Navigation ───────────────────────────────────────────────
+
+  function renderYearNav(years, activeYear) {
+    var container = document.getElementById('year-nav');
+    if (!container) return;
+    container.innerHTML = '';
+
+    var count = years.length;
+    if (count === 0) return;
+
+    var maxRing = 36;
+    var step = 7;
+
+    years.forEach(function(year, idx) {
+      var radius = maxRing + (count - 1 - idx) * step;
+      var isActive = year === activeYear;
+      var item = document.createElement('div');
+      item.className = 'year-ring-nav-item' + (isActive ? ' active' : '');
+      item.style.width = (radius * 2) + 'px';
+      item.style.height = (radius * 2) + 'px';
+      item.dataset.year = year;
+
+      var label = document.createElement('span');
+      label.textContent = year;
+      item.appendChild(label);
+
+      item.addEventListener('click', function() {
+        selectedYear = year;
+        showYearPanel(year);
+        renderYearNav(years, year);
+      });
+
+      container.appendChild(item);
+    });
+  }
+
   // ── Sidebar ───────────────────────────────────────────────────────────────
 
   function updateSidebar(entries, years) {
@@ -341,18 +486,26 @@
     if (!list) return;
     list.innerHTML = '';
 
+    var currentYear = new Date().getFullYear();
+    var todayEntry = getTodayEntry();
+
     years.forEach(function(year) {
       var yearEntries = entries[year] || [];
       var count = yearEntries.length;
       var li = document.createElement('li');
-      li.className = 'year-item' + (selectedYear === year ? ' active' : '');
-      var entryWord = count === 1 ? t('entry') : t('entries');
-      li.innerHTML = '<span class="year-num">' + year + '</span>' +
-        '<span class="year-count">' + count + ' ' + entryWord + '</span>';
+      var isActive = selectedYear === year;
+      var isCurrentYear = year === currentYear;
+      var hasToday = isCurrentYear && todayEntry !== null;
+
+      li.className = 'year-item' + (isActive ? ' active' : '') + (isCurrentYear ? ' current-year' : '');
+      li.innerHTML =
+        '<span class="year-num">' + year + '</span>' +
+        '<span class="year-count">' + count + ' ' + (count === 1 ? t('entry') : t('entries')) + '</span>' +
+        (hasToday ? '<span class="today-dot-inline recorded" id="today-dot-inline"></span>' : '');
       li.addEventListener('click', function() {
         selectedYear = year;
         updateSidebar(loadEntries(), years);
-        showYearDetail(year);
+        showYearPanel(year);
       });
       list.appendChild(li);
     });
@@ -360,13 +513,12 @@
 
   // ── Year Detail Panel ──────────────────────────────────────────────────────
 
-  function showYearDetail(year) {
+  function showYearPanel(year) {
     var panel = document.getElementById('year-panel');
-    var title = document.getElementById('panel-title');
-    var list = document.getElementById('panel-entries');
-    var entries = getYearEntries(year);
+    document.getElementById('panel-title').textContent = year;
 
-    title.textContent = year;
+    var entries = getYearEntries(year);
+    var list = document.getElementById('panel-entries');
     list.innerHTML = '';
 
     if (entries.length === 0) {
@@ -377,14 +529,43 @@
     } else {
       entries.slice().reverse().forEach(function(entry) {
         var li = document.createElement('li');
+        li.className = 'entry-item';
+
         var date = new Date(entry.date);
+        var todayKey = getTodayKey();
+        var isToday = entry.date.substring(0, 10) === todayKey;
+
         var dateStr = date.toLocaleDateString(currentLang === 'zh' ? 'zh-CN' : 'en-US', {
           month: 'short', day: 'numeric',
         });
-        li.innerHTML = '<span class="entry-date">' + dateStr + '</span>' +
-          '<span class="entry-text">' + escapeHtml(entry.text) + '</span>';
+
+        li.innerHTML =
+          '<div class="entry-row">' +
+            '<div class="entry-left">' +
+              '<span class="entry-date">' + dateStr + '</span>' +
+              (isToday ? '<span class="entry-today-badge">' + (currentLang === 'zh' ? '今天' : 'Today') + '</span>' : '') +
+            '</div>' +
+            (isToday
+              ? '<button class="entry-edit-btn" data-id="' + entry.id + '">' + (currentLang === 'zh' ? '修改' : 'Edit') + '</button>'
+              : '') +
+          '</div>' +
+          '<p class="entry-text">' + escapeHtml(entry.text) + '</p>';
         list.appendChild(li);
       });
+    }
+
+    // Today FAB hint
+    var todayHint = document.getElementById('today-fab-hint');
+    var currentYearEntries = getYearEntries(new Date().getFullYear());
+    var todayEntry2 = getTodayEntry();
+    if (todayHint) {
+      if (todayEntry2) {
+        todayHint.textContent = t('todayRecorded');
+        todayHint.classList.add('recorded');
+      } else {
+        todayHint.textContent = t('todayNotRecorded');
+        todayHint.classList.remove('recorded');
+      }
     }
 
     panel.classList.add('open');
@@ -400,36 +581,33 @@
     return div.innerHTML;
   }
 
-  // ── Init ───────────────────────────────────────────────────────────────────
+  // ── Events ───────────────────────────────────────────────────────────────
 
   function bindEvents() {
     currentLang = detectLang();
 
-    var langBtn = document.getElementById('lang-toggle');
-    if (langBtn) langBtn.addEventListener('click', toggleLang);
-
-    var guideNext = document.getElementById('guide-next');
-    if (guideNext) guideNext.addEventListener('click', nextGuideStep);
-
-    var guideSkip = document.getElementById('guide-skip');
-    if (guideSkip) guideSkip.addEventListener('click', closeGuide);
-
-    var guideOverlay = document.getElementById('guide-overlay');
-    if (guideOverlay) {
-      guideOverlay.addEventListener('click', function(e) {
-        if (e.target === guideOverlay) closeGuide();
-      });
-    }
-
-    // Modal
-    var overlay = document.getElementById('modal-overlay');
-    overlay.addEventListener('click', function(e) {
-      if (e.target === overlay) closeModal();
+    // Language toggle
+    document.getElementById('lang-toggle').addEventListener('click', function() {
+      setLang(currentLang === 'en' ? 'zh' : 'en');
     });
 
+    // Guide
+    document.getElementById('guide-next').addEventListener('click', nextGuideStep);
+    var skipBtn = document.getElementById('guide-skip');
+    if (skipBtn) skipBtn.addEventListener('click', closeGuide);
+    var guideOverlay = document.getElementById('guide-overlay');
+    guideOverlay.addEventListener('click', function(e) {
+      if (e.target === guideOverlay) closeGuide();
+    });
+
+    // Modal
+    var modalOverlay = document.getElementById('modal-overlay');
+    modalOverlay.addEventListener('click', function(e) {
+      if (e.target === modalOverlay) closeModal();
+    });
     document.getElementById('modal-close').addEventListener('click', closeModal);
     document.getElementById('entry-submit').addEventListener('click', function() {
-      var year = Number(document.getElementById('modal-year').textContent);
+      var year = parseInt(document.getElementById('modal-year').textContent, 10);
       submitEntry(year);
     });
 
@@ -439,19 +617,36 @@
     });
     textarea.addEventListener('keydown', function(e) {
       if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
-        var year = Number(document.getElementById('modal-year').textContent);
+        var year = parseInt(document.getElementById('modal-year').textContent, 10);
         submitEntry(year);
       }
       if (e.key === 'Escape') closeModal();
     });
 
-    // FAB — always uses current year
+    // FAB — context-sensitive
     document.getElementById('fab-new').addEventListener('click', function() {
-      openModal(new Date().getFullYear());
+      var year = new Date().getFullYear();
+      var todayEntry = getTodayEntry();
+      if (todayEntry) {
+        openModal(year, todayEntry);
+      } else {
+        openModal(year, null);
+      }
     });
 
-    // Year panel close
+    // Panel close
     document.getElementById('panel-close').addEventListener('click', closeYearPanel);
+
+    // Entry edit from panel (delegated)
+    document.getElementById('panel-entries').addEventListener('click', function(e) {
+      var btn = e.target.closest('.entry-edit-btn');
+      if (!btn) return;
+      var id = parseInt(btn.getAttribute('data-id'), 10);
+      var year = new Date().getFullYear();
+      var entries = getYearEntries(year);
+      var entry = entries.find(function(e) { return e.id === id; });
+      if (entry) openModal(year, entry);
+    });
 
     // Keyboard shortcuts
     document.addEventListener('keydown', function(e) {
@@ -462,17 +657,27 @@
       }
       if ((e.metaKey || e.ctrlKey) && e.key === 'n') {
         e.preventDefault();
-        openModal(new Date().getFullYear());
+        var year = new Date().getFullYear();
+        var todayEntry = getTodayEntry();
+        openModal(year, todayEntry);
       }
     });
+
+    // Forest click
+    document.getElementById('forest-canvas').addEventListener('click', function(e) {
+      // handled by scene.js raycaster, but also check if clicking empty area
+      // If no tree hovered after click, close panel
+    });
   }
+
+  // ── Bootstrap ───────────────────────────────────────────────────────────
 
   window.addEventListener('DOMContentLoaded', function() {
     bindEvents();
     applyLang();
-    initForest();
-    setTimeout(showGuide, 800);
+    initForest().then(function() {
+      setTimeout(showGuide, 800);
+    });
   });
 
-  window.showYearDetail = showYearDetail;
 })();

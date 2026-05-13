@@ -1,5 +1,6 @@
 // Three.js scene setup for Daily Tree
-import * as THREE from 'three';
+// THREE must be loaded and available globally before this module.
+// Set window.THREE before importing this module (done in index.html via UMD three.js)
 
 export class ForestScene {
   constructor(canvas) {
@@ -16,11 +17,9 @@ export class ForestScene {
   }
 
   _init() {
-    // Scene
     this.scene = new THREE.Scene();
     this.scene.background = new THREE.Color(0x0A0A0B);
 
-    // Camera
     this.camera = new THREE.PerspectiveCamera(
       50,
       this.canvas.clientWidth / this.canvas.clientHeight,
@@ -30,7 +29,6 @@ export class ForestScene {
     this.camera.position.set(0, 80, 200);
     this.camera.lookAt(0, 40, 0);
 
-    // Renderer
     this.renderer = new THREE.WebGLRenderer({
       canvas: this.canvas,
       antialias: true,
@@ -39,14 +37,11 @@ export class ForestScene {
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     this.renderer.setSize(this.canvas.clientWidth, this.canvas.clientHeight);
 
-    // Fog for depth
     this.scene.fog = new THREE.Fog(0x0A0A0B, 250, 500);
 
-    // Ambient fill light
     const ambient = new THREE.AmbientLight(0xffffff, 0.3);
     this.scene.add(ambient);
 
-    // Ground plane hint
     const groundGeo = new THREE.PlaneGeometry(1000, 1000);
     const groundMat = new THREE.MeshBasicMaterial({
       color: 0x0F0F12,
@@ -63,12 +58,12 @@ export class ForestScene {
   }
 
   _bindEvents() {
+    this.canvas.addEventListener('click', (e) => this._onCanvasClick(e));
     window.addEventListener('resize', () => this._onResize());
-    this.canvas.addEventListener('mousemove', (e) => this._onMouseMove(e));
-    this.canvas.addEventListener('click', (e) => this._onClick(e));
   }
 
   _onResize() {
+    if (!this.camera || !this.renderer) return;
     const w = this.canvas.clientWidth;
     const h = this.canvas.clientHeight;
     this.camera.aspect = w / h;
@@ -76,60 +71,47 @@ export class ForestScene {
     this.renderer.setSize(w, h);
   }
 
-  _onMouseMove(e) {
-    const rect = this.canvas.getBoundingClientRect();
-    this.mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
-    this.mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+  _animate() {
+    this._animId = requestAnimationFrame(() => this._animate());
+    const elapsed = this.clock.getElapsedTime();
+    this.trees.forEach(tree => tree.update(elapsed));
+    this.renderer.render(this.scene, this.camera);
+  }
 
+  _onCanvasClick(event) {
+    const rect = this.canvas.getBoundingClientRect();
+    this.mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+    this.mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
     this.raycaster.setFromCamera(this.mouse, this.camera);
-    const meshes = [];
-    this.trees.forEach(t => {
-      if (t.group) t.group.children.forEach(c => meshes.push(c));
+
+    const allMeshes = [];
+    this.trees.forEach(tree => {
+      tree.group.traverse(child => {
+        if (child.isMesh) allMeshes.push(child);
+      });
     });
 
-    const intersects = this.raycaster.intersectObjects(meshes);
-    const newHovered = intersects.length > 0 ? this._findTree(intersects[0].object) : null;
-
-    if (newHovered !== this.hoveredTree) {
-      if (this.hoveredTree) this.hoveredTree.setHovered(false);
-      if (newHovered) newHovered.setHovered(true);
-      this.hoveredTree = newHovered;
-      this.canvas.style.cursor = newHovered ? 'pointer' : 'default';
+    const intersects = this.raycaster.intersectObjects(allMeshes);
+    if (intersects.length > 0) {
+      const hitTree = this.trees.find(t =>
+        t.group.traverse(c => c === intersects[0].object).length > 0
+      );
+      if (hitTree && window.showYearDetail) {
+        window.showYearDetail(hitTree.year);
+      }
     }
   }
 
-  _onClick(e) {
-    if (!this.hoveredTree) return;
-    const year = this.hoveredTree.year;
-    const count = this.hoveredTree.entryCount;
-    if (window.showYearDetail) window.showYearDetail(year, count);
-  }
-
-  _findTree(object) {
-    return this.trees.find(t => t.group && t.group.children.includes(object)) || null;
-  }
-
-  _animate() {
-    this._animationId = requestAnimationFrame(() => this._animate());
-    const delta = this.clock.getDelta();
-    const elapsed = this.clock.getElapsedTime();
-
-    this.trees.forEach(tree => tree.update(delta, elapsed));
-
-    // Gentle camera drift
-    this.cameraY += (this.cameraTargetY - this.cameraY) * 0.05;
-    this.camera.position.y = 80 + Math.sin(elapsed * 0.1) * 3;
-    this.camera.lookAt(0, this.cameraY + 40, 0);
-
-    this.renderer.render(this.scene, this.camera);
+  removeAllTrees() {
+    this.trees.forEach(t => this.scene.remove(t.group));
+    this.trees = [];
   }
 
   growTree(tree) {
     if (!tree || !tree.group) return;
-    // Animate trunk growing taller
     const trunk = tree.group.children[0];
     if (!trunk) return;
-    const startHeight = tree.group.userData.trunkHeight;
+    const startHeight = tree.group.userData.trunkHeight || 20;
     const targetHeight = startHeight + 6;
     let progress = 0;
     const animate = () => {
@@ -142,8 +124,7 @@ export class ForestScene {
       const newH = startHeight + (targetHeight - startHeight) * eased;
       trunk.scale.y = 1 + (newH / startHeight - 1) * eased;
       trunk.position.y = newH / 2;
-      // Move circles up
-      tree.circles.forEach((c, i) => {
+      tree.circles.forEach(c => {
         c.position.y += (targetHeight - startHeight) * 0.03;
       });
       requestAnimationFrame(animate);
@@ -151,8 +132,9 @@ export class ForestScene {
     animate();
   }
 
-  addTree(Tree, year, entryCount, options = {}) {
-    const tree = new Tree(year, entryCount, { THREE, ...options });
+  addTree(TreeClass, year, entryCount, options) {
+    var opts = options || {};
+    var tree = new TreeClass(year, entryCount, { THREE: THREE, lastEntryDate: opts.lastEntryDate || null });
     tree.group.position.x = (year - this._currentYear()) * 50;
     tree.group.position.z = (Math.random() - 0.5) * 30;
     this.scene.add(tree.group);
@@ -160,20 +142,7 @@ export class ForestScene {
     return tree;
   }
 
-  removeAllTrees() {
-    this.trees.forEach(t => {
-      if (t.group) this.scene.remove(t.group);
-    });
-    this.trees = [];
-  }
-
   _currentYear() {
     return new Date().getFullYear();
-  }
-
-  destroy() {
-    cancelAnimationFrame(this._animationId);
-    window.removeEventListener('resize', this._onResize);
-    this.renderer.dispose();
   }
 }
