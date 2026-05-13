@@ -35,6 +35,15 @@
       guideStep3Desc: 'Click any tree to read that year. The forest remembers everything — your wins and your silences.',
       gotIt: 'Got it',
       tryIt: 'Start now',
+      // Guide preview slide
+      guidePreviewTitle: 'Watch your forest grow',
+      guidePreviewDesc: 'The more you record, the more your trees breathe. Here\'s what consistency looks like:',
+      preview1Week: '1 week',
+      preview1Month: '1 month',
+      preview1Year: '1 year',
+      previewDormant: 'Dormant — took a break',
+      previewLiving: 'Living — active recently',
+      previewArchived: 'Archived — that year is closed',
       emptyForestTitle: 'Start your forest',
       emptyForestDesc: 'Click + to write your first entry.',
       // Today reminders
@@ -70,6 +79,15 @@
       guideStep3Desc: '点击任意一棵树，可以看到那一年的所有记录。森林记得一切。',
       gotIt: '明白了',
       tryIt: '开始记录',
+      // Guide preview slide
+      guidePreviewTitle: '看着你的森林成长',
+      guidePreviewDesc: '记录越多，树越有生命力。坚持一段时间后，你的森林是这样的：',
+      preview1Week: '1周',
+      preview1Month: '1个月',
+      preview1Year: '1年',
+      previewDormant: '沉睡 — 按下了暂停',
+      previewLiving: '活着 — 最近在生长',
+      previewArchived: '归档 — 那一年结束了',
       emptyForestTitle: '开始你的森林',
       emptyForestDesc: '点击 + 写下第一条记录。',
       // Today reminders
@@ -125,7 +143,10 @@
 
   function getTodayKey() {
     var d = new Date();
-    return d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate();
+    var y = d.getFullYear();
+    var m = String(d.getMonth() + 1).padStart(2, '0');
+    var day = String(d.getDate()).padStart(2, '0');
+    return y + '-' + m + '-' + day;
   }
 
   function hasTodayEntry() {
@@ -275,14 +296,21 @@
       { num: '01', title: t('guideStep1Title'), desc: t('guideStep1Desc') },
       { num: '02', title: t('guideStep2Title'), desc: t('guideStep2Desc') },
       { num: '03', title: t('guideStep3Title'), desc: t('guideStep3Desc') },
+      { num: '04', title: t('guidePreviewTitle'), desc: t('guidePreviewDesc'), isPreview: true },
     ];
     var s = steps[step];
     document.getElementById('guide-num').textContent = s.num;
     document.getElementById('guide-step-title').textContent = s.title;
     document.getElementById('guide-step-desc').textContent = s.desc;
-    document.querySelectorAll('.guide-dot').forEach(function(d, i) {
+
+    var dotsContainer = document.querySelector('.guide-steps');
+    if (dotsContainer) dotsContainer.querySelectorAll('.guide-dot').forEach(function(d, i) {
       d.classList.toggle('active', i === step);
     });
+
+    var previewRow = document.getElementById('guide-preview-row');
+    if (previewRow) previewRow.style.display = step === 3 ? 'flex' : 'none';
+
     var nextBtn = document.getElementById('guide-next');
     nextBtn.textContent = step < steps.length - 1
       ? (step === 0 ? t('tryIt') : 'Next')
@@ -290,7 +318,7 @@
   }
 
   function nextGuideStep() {
-    if (guideStep < 2) { guideStep++; updateGuideStep(guideStep); }
+    if (guideStep < 3) { guideStep++; updateGuideStep(guideStep); }
     else { closeGuide(); }
   }
 
@@ -363,15 +391,6 @@
   }
 
   // ── Forest ─────────────────────────────────────────────────────────────────
-
-  var forestScene = null;
-  var selectedYear = null;
-  var SceneModuleRef = null;
-  var TreeModuleRef = null;
-
-  function isForestReady() { return forestScene !== null; }
-
-// ── Forest ─────────────────────────────────────────────────────────────────
 
   var forestScene = null;
   var selectedYear = null;
