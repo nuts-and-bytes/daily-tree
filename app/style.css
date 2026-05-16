@@ -11,7 +11,6 @@
   --border-strong: rgba(255,255,255,0.12);
   --green:         #4A7C59;
   --green-light:   #6B9B7A;
-  --green-glow:    rgba(74,124,89,0.25);
   --gold:          #C4A77D;
   --bark:          #8B7355;
   --mist:          #E8E8EC;
@@ -104,7 +103,6 @@ body {
   bottom: 0; left: 0; right: 0;
   z-index: 200;
   height: calc(var(--dock-h) + var(--safe-bottom));
-  padding-bottom: var(--safe-bottom);
   background: rgba(10,12,16,0.85);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
@@ -139,7 +137,7 @@ body {
   transition: background 0.15s;
   flex-shrink: 0;
 }
-.dock-year-item:hover { background: rgba(255,255,255,0.05); }
+.dock-year-item:hover { background: var(--border); }
 .dock-year-item.active { background: rgba(74,124,89,0.1); }
 .dock-year-item svg { display: block; }
 .dock-year-label {
