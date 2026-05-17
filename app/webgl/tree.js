@@ -1,6 +1,27 @@
 // Daily Tree V2 — Organic leaf-cluster tree
 // THREE must be available globally before this module loads.
 
+// Growth milestones: streak days map to visual stages
+const GROWTH_STAGES = {
+  0: 'seed',       // Day 0: Seed (no entries)
+  1: 'sprout',     // Days 1-6: Tiny sprout
+  7: 'sapling',    // Days 7-14: Small sapling
+  15: 'young',     // Days 15-29: Young tree
+  30: 'mature',    // Days 30-179: Mature tree
+  180: 'elder',    // Days 180-364: Elder tree
+  365: 'ancient',  // Day 365+: Ancient tree
+};
+
+function getGrowthStage(streakDays) {
+  if (streakDays === 0) return GROWTH_STAGES[0];
+  if (streakDays < 7) return GROWTH_STAGES[1];
+  if (streakDays < 15) return GROWTH_STAGES[7];
+  if (streakDays < 30) return GROWTH_STAGES[15];
+  if (streakDays < 180) return GROWTH_STAGES[30];
+  if (streakDays < 365) return GROWTH_STAGES[180];
+  return GROWTH_STAGES[365];
+}
+
 // Seeded pseudo-random (LCG) — deterministic per year+index
 function seededRng(seed) {
   let s = Math.abs(seed) || 1;
@@ -19,12 +40,12 @@ function getSeason() {
 }
 
 export class Tree {
-  constructor(year, entryCount, options) {
+  constructor(year, streakDays, options) {
     this.year       = year;
-    this.entryCount = entryCount || 0;
+    this.streakDays = streakDays || 0;
     this.THREE      = options.THREE || window.THREE;
-    this.lastEntryDate = options.lastEntryDate || null;
     this.isCurrentYear = (year === new Date().getFullYear());
+    this.stage      = getGrowthStage(this.streakDays);
 
     this.group  = new this.THREE.Group();
     this.blobs  = [];     // leaf blob meshes
@@ -36,11 +57,8 @@ export class Tree {
   // ── State ────────────────────────────────────────────────────────────────
 
   getState() {
-    if (this.entryCount === 0) return 'empty';
-    const daysSince = (Date.now() - new Date(this.lastEntryDate)) / 86400000;
-    if (daysSince <= 14) return 'living';
-    if (daysSince <= 30) return 'dormant';
-    return 'archived';
+    // With streak-based system: empty if no streak, living if active streak exists
+    return this.streakDays === 0 ? 'empty' : 'living';
   }
 
   // ── Colors ───────────────────────────────────────────────────────────────
@@ -70,7 +88,7 @@ export class Tree {
     const state = this.getState();
     this._buildTrunk(state);
     this._buildRoots(state);
-    if (this.entryCount > 0 && state !== 'empty') {
+    if (this.streakDays > 0 && state !== 'empty') {
       this._buildCanopy(state);
     }
     if (state === 'living') {
@@ -95,7 +113,8 @@ export class Tree {
   }
 
   _buildRoots(state) {
-    if (this.entryCount < 5) return;
+    // Roots appear at sapling stage (7+ days)
+    if (this.streakDays < 7) return;
     const rng = seededRng(this.year * 7 + 1);
     const rootMat = new this.THREE.MeshStandardMaterial({
       color: this._trunkColor(state),
@@ -120,13 +139,13 @@ export class Tree {
   _buildCanopy(state) {
     const h         = this._trunkHeight();
     const count     = this._blobCount();
-    const rng       = seededRng(this.year * 13 + this.entryCount);
+    const rng       = seededRng(this.year * 13 + this.streakDays);
     const leafColor = this._leafColor(state);
-    const opacity   = state === 'dormant' ? 0.4 : (state === 'archived' ? 0.25 : 0.75);
+    const opacity   = 0.75; // Living trees are always vibrant
 
     const crownY = h * 0.75;
-    const crownW = 8 + Math.min(this.entryCount, 60) * 0.35;
-    const crownH = 12 + Math.min(this.entryCount, 60) * 0.28;
+    const crownW = 8 + Math.min(this.streakDays, 60) * 0.35;
+    const crownH = 12 + Math.min(this.streakDays, 60) * 0.28;
 
     for (let i = 0; i < count; i++) {
       // Box-Muller for Gaussian distribution
@@ -178,16 +197,16 @@ export class Tree {
   // ── Geometry helpers ─────────────────────────────────────────────────────
 
   _trunkHeight() {
-    return Math.min(18 + this.entryCount * 0.6, 60);
+    return Math.min(18 + this.streakDays * 0.6, 60);
   }
 
   _blobCount() {
-    if (this.entryCount === 0) return 0;
-    return Math.min(4 + Math.floor(this.entryCount * 0.9), 60);
+    if (this.streakDays === 0) return 0;
+    return Math.min(4 + Math.floor(this.streakDays * 0.9), 60);
   }
 
   _crownRadius() {
-    return 8 + Math.min(this.entryCount, 60) * 0.35;
+    return 8 + Math.min(this.streakDays, 60) * 0.35;
   }
 
   // ── Animation ────────────────────────────────────────────────────────────
@@ -205,11 +224,6 @@ export class Tree {
       if (this.trunk) {
         this.trunk.rotation.z = Math.sin(elapsed * 0.4) * 0.01;
       }
-    } else if (state === 'dormant') {
-      const slow = Math.sin(elapsed * 0.25) * 0.01;
-      this.blobs.forEach(b => {
-        b.material.opacity = b.userData.baseOpacity + slow;
-      });
     }
   }
 }
