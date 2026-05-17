@@ -39,6 +39,26 @@ function getSeason() {
   return 'winter';
 }
 
+// Season-specific color palettes
+const SEASON_COLORS = {
+  spring: {
+    leaf: 0x7DB88A,    // pale fresh green
+    trunk: 0x8B7355,   // warm brown
+  },
+  summer: {
+    leaf: 0x4A7C59,    // deep forest green
+    trunk: 0x8B7355,   // rich brown
+  },
+  autumn: {
+    leaf: 0xB8863C,    // golden rust
+    trunk: 0x9B7C6B,   // richer brown
+  },
+  winter: {
+    leaf: 0x2A3530,    // pale desaturated green
+    trunk: 0x6B6050,   // silvery-brown
+  },
+};
+
 export class Tree {
   constructor(year, streakDays, options) {
     this.year       = year;
@@ -67,21 +87,16 @@ export class Tree {
 
   _leafColor(state) {
     const season = this.isCurrentYear ? getSeason() : 'summer';
-    if (state === 'archived') return new this.THREE.Color(0x3D3020);
-    if (state === 'dormant')  return new this.THREE.Color(0x2E3D30);
-    // living — varies by season
-    if (season === 'spring')  return new this.THREE.Color(0x7DB88A);
-    if (season === 'summer')  return new this.THREE.Color(0x4A7C59);
-    if (season === 'autumn')  return new this.THREE.Color(0xB8863C);
-    if (season === 'winter')  return new this.THREE.Color(0x2A3530);
-    return new this.THREE.Color(0x4A7C59);
+    if (state === 'empty') return new this.THREE.Color(0x4A7C59);
+    // living trees show vibrant seasonal colors
+    return new this.THREE.Color(SEASON_COLORS[season].leaf);
   }
 
   _trunkColor(state) {
-    if (state === 'living')   return new this.THREE.Color(0x8B7355);
-    if (state === 'dormant')  return new this.THREE.Color(0x6B6050);
-    if (state === 'archived') return new this.THREE.Color(0x4A3A2A);
-    return new this.THREE.Color(0x3A2A1A);
+    const season = this.isCurrentYear ? getSeason() : 'summer';
+    if (state === 'empty') return new this.THREE.Color(0x6B6050);
+    // trunk color evolves slightly with season
+    return new this.THREE.Color(SEASON_COLORS[season].trunk);
   }
 
   // ── Build ────────────────────────────────────────────────────────────────
