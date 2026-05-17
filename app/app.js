@@ -256,6 +256,7 @@
   // ── Forest ────────────────────────────────────────────────────────────────
 
   let forestScene = null;
+  let weatherManager = null;
 
   async function initForest() {
     const canvas = document.getElementById('forest-canvas');
@@ -263,8 +264,11 @@
     try {
       const { ForestScene } = await import('./webgl/scene.js');
       const { Tree }        = await import('./webgl/tree.js');
+      const { WeatherManager } = await import('./weather.js');
       forestScene = new ForestScene(canvas);
       window._TreeClass = Tree;
+      weatherManager = new WeatherManager();
+      weatherManager.init();
       refreshForest();
     } catch (err) {
       console.error('Forest init failed:', err);
