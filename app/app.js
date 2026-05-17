@@ -295,7 +295,6 @@
 
     const lastDate = yearEntries[yearEntries.length - 1].date;
     const streakDays = computeStreak();
-    console.log('[DEBUG] renderTree:', { currentYear, streakDays, entryCount: yearEntries.length });
     forestScene.addTree(window._TreeClass, currentYear, streakDays, { lastEntryDate: lastDate });
 
     updateDock(entries, currentYear);
