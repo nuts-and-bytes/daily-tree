@@ -441,8 +441,11 @@ function showGuide() {
   const guideCanvas = document.getElementById('guide-tree-canvas');
   if (guideCanvas) {
     const dpr = devicePixelRatio || 1;
-    guideCanvas.width  = guideCanvas.offsetWidth  * dpr || 160 * dpr;
-    guideCanvas.height = guideCanvas.offsetHeight * dpr || 220 * dpr;
+    const GW = 160, GH = 220;
+    guideCanvas.style.width  = GW + 'px';
+    guideCanvas.style.height = GH + 'px';
+    guideCanvas.width  = GW * dpr;
+    guideCanvas.height = GH * dpr;
     drawTree(guideCanvas, 20, 5);
   }
 }
