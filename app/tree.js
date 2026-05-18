@@ -88,6 +88,152 @@ function drawAmbient(ctx, x, y, W, H, pal) {
   ctx.fillStyle = grd; ctx.fillRect(0, 0, W, H);
 }
 
+// ── 3D helpers ──
+
+function drawLeaf3D(ctx, ox, oy, size, side, pal, wave) {
+  const lw = size * 0.82, lh = size * 0.52;
+  ctx.save();
+  ctx.translate(ox, oy);
+  ctx.rotate(side * 0.42 + wave);
+  const pkx = side * lw * 0.36, pky = -lh;
+  const tx  = side * lw * 0.82,  ty  = -size * 0.12;
+
+  ctx.save(); ctx.translate(3, 4);
+  ctx.beginPath();
+  ctx.moveTo(0,0);
+  ctx.bezierCurveTo(side*lw*0.1,-lh*0.75,pkx,pky+6,pkx,pky);
+  ctx.bezierCurveTo(side*lw*0.6,-lh*0.28,tx-side*4,ty+6,tx,ty);
+  ctx.bezierCurveTo(side*lw*0.22,lh*0.14,side*3,4,0,0);
+  ctx.fillStyle='rgba(0,0,0,0.25)'; ctx.fill();
+  ctx.restore();
+
+  ctx.beginPath();
+  ctx.moveTo(0,0);
+  ctx.bezierCurveTo(side*lw*0.12,-lh*0.82,pkx,pky+4,pkx,pky);
+  ctx.bezierCurveTo(side*lw*0.62,-lh*0.24,tx-side*3,ty+4,tx,ty);
+  ctx.bezierCurveTo(side*lw*0.2,lh*0.12,side*2,3,0,0);
+  ctx.fillStyle=`rgba(${Math.max(0,pal.lf[0]-20)},${Math.max(0,pal.lf[1]-40)},${Math.max(0,pal.lf[2]-14)},0.62)`;
+  ctx.fill();
+
+  ctx.beginPath();
+  ctx.moveTo(0,0);
+  ctx.bezierCurveTo(side*lw*0.08,-lh*1.05,pkx-side*3,pky-3,pkx,pky);
+  ctx.bezierCurveTo(side*lw*0.58,-lh*0.20,tx-side*2,ty-2,tx,ty);
+  ctx.bezierCurveTo(side*lw*0.18,lh*0.10,side*1,1,0,0);
+  ctx.fillStyle=`rgba(${pal.lf[0]},${pal.lf[1]},${pal.lf[2]},0.77)`;
+  ctx.fill();
+
+  ctx.beginPath();
+  ctx.moveTo(0,0);
+  ctx.bezierCurveTo(side*lw*0.08,-lh*1.05,pkx-side*3,pky-3,pkx,pky);
+  ctx.lineWidth=1.5; ctx.strokeStyle=`rgba(${pal.rim[0]},${pal.rim[1]},${pal.rim[2]},0.48)`; ctx.stroke();
+
+  ctx.beginPath(); ctx.moveTo(0,0);
+  ctx.bezierCurveTo(side*lw*0.3,-lh*0.45,side*lw*0.48,pky*0.72,pkx,pky);
+  ctx.lineWidth=0.9; ctx.strokeStyle=`rgba(${pal.rim[0]},${pal.rim[1]},${pal.rim[2]},0.28)`; ctx.stroke();
+
+  ctx.restore();
+}
+
+function drawSeed3D(ctx, W, H, pal, t) {
+  const cx = W/2, cy = H*0.57;
+  const pulse = 0.82 + Math.sin(t*0.0018)*0.18;
+  const orbit = t*0.00055;
+  const rng = makeRng(7);
+
+  const outerGrd = ctx.createRadialGradient(cx,cy,0,cx,cy,95);
+  outerGrd.addColorStop(0,`rgba(${pal.lf[0]},${pal.lf[1]},${pal.lf[2]},0.07)`);
+  outerGrd.addColorStop(1,'rgba(0,0,0,0)');
+  ctx.fillStyle=outerGrd; ctx.fillRect(0,0,W,H);
+
+  const soilGrd = ctx.createRadialGradient(cx,cy+20,0,cx,cy+20,52);
+  soilGrd.addColorStop(0,`rgba(${pal.br[0]},${pal.br[1]},${pal.br[2]},0.42)`);
+  soilGrd.addColorStop(1,'rgba(0,0,0,0)');
+  ctx.beginPath(); ctx.ellipse(cx,cy+22,52,14,0,0,Math.PI*2); ctx.fillStyle=soilGrd; ctx.fill();
+
+  const halo = ctx.createRadialGradient(cx,cy,5,cx,cy,44*pulse);
+  halo.addColorStop(0,`rgba(${pal.lf[0]},${pal.lf[1]},${pal.lf[2]},0.55)`);
+  halo.addColorStop(0.45,`rgba(${pal.lf[0]},${pal.lf[1]},${pal.lf[2]},0.16)`);
+  halo.addColorStop(1,'rgba(0,0,0,0)');
+  ctx.beginPath(); ctx.arc(cx,cy,44*pulse,0,Math.PI*2); ctx.fillStyle=halo; ctx.fill();
+
+  ctx.beginPath(); ctx.ellipse(cx+2.5,cy+3.5,9,12.5,-0.15,0,Math.PI*2);
+  ctx.fillStyle='rgba(0,0,0,0.38)'; ctx.fill();
+
+  ctx.beginPath(); ctx.ellipse(cx,cy,9,12,-0.15,0,Math.PI*2);
+  const sg = ctx.createRadialGradient(cx-3,cy-4,0,cx,cy,14);
+  sg.addColorStop(0,`rgba(${Math.min(255,pal.br[0]+55)},${Math.min(255,pal.br[1]+42)},${Math.min(255,pal.br[2]+28)},1)`);
+  sg.addColorStop(0.55,`rgba(${Math.min(255,pal.br[0]+15)},${Math.min(255,pal.br[1]+12)},${Math.min(255,pal.br[2]+8)},0.96)`);
+  sg.addColorStop(1,`rgba(${Math.max(0,pal.br[0]-15)},${Math.max(0,pal.br[1]-12)},${Math.max(0,pal.br[2]-8)},0.88)`);
+  ctx.fillStyle=sg; ctx.fill();
+  ctx.strokeStyle=`rgba(${pal.lf[0]},${pal.lf[1]},${pal.lf[2]},0.52)`; ctx.lineWidth=1.5; ctx.stroke();
+  ctx.beginPath(); ctx.arc(cx-2.5,cy-4,2.8,0,Math.PI*2);
+  ctx.fillStyle='rgba(255,255,255,0.38)'; ctx.fill();
+
+  for (let i=0; i<6; i++) {
+    const base = rng()*Math.PI*2;
+    const ang  = base + orbit*(1+i*0.28);
+    const dist = 28+rng()*18;
+    const px = cx+Math.cos(ang)*dist, py = cy+Math.sin(ang)*dist*0.45;
+    const sr  = 0.9+rng()*1.6;
+    const fa  = 0.25+Math.abs(Math.sin(t*0.0019+i*1.1))*0.35;
+    const pg  = ctx.createRadialGradient(px,py,0,px,py,sr*2.2);
+    pg.addColorStop(0,`rgba(${pal.dot[0]},${pal.dot[1]},${pal.dot[2]},${fa})`);
+    pg.addColorStop(1,'rgba(0,0,0,0)');
+    ctx.beginPath(); ctx.arc(px,py,sr*2.2,0,Math.PI*2); ctx.fillStyle=pg; ctx.fill();
+  }
+}
+
+function drawSprout3D(ctx, W, H, pal, t) {
+  const bx = W/2, by = H-30;
+  const stemH = H*0.22;
+  const sway  = Math.sin(t*0.00088)*0.058 + Math.sin(t*0.00142)*0.022;
+
+  drawAmbient(ctx, bx, by, W, H, pal);
+
+  const soilGrd = ctx.createRadialGradient(bx,by+4,0,bx,by+4,55);
+  soilGrd.addColorStop(0,`rgba(${pal.br[0]},${pal.br[1]},${pal.br[2]},0.48)`);
+  soilGrd.addColorStop(1,'rgba(0,0,0,0)');
+  ctx.beginPath(); ctx.ellipse(bx,by+6,55,15,0,0,Math.PI*2); ctx.fillStyle=soilGrd; ctx.fill();
+
+  ctx.save();
+  ctx.translate(bx,by);
+  ctx.rotate(sway);
+
+  ctx.beginPath(); ctx.moveTo(3.5,0); ctx.lineTo(3.5,-stemH);
+  ctx.lineWidth=9; ctx.strokeStyle='rgba(0,0,0,0.30)'; ctx.lineCap='round'; ctx.stroke();
+
+  ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(0,-stemH);
+  ctx.lineWidth=7; ctx.strokeStyle=`rgba(${pal.br[0]},${pal.br[1]},${pal.br[2]},0.90)`;
+  ctx.lineCap='round'; ctx.stroke();
+
+  ctx.beginPath(); ctx.moveTo(-2.2,-8); ctx.lineTo(-2.2,-stemH+12);
+  ctx.lineWidth=2.5; ctx.strokeStyle=`rgba(${Math.min(255,pal.br[0]+48)},${Math.min(255,pal.br[1]+38)},${Math.min(255,pal.br[2]+24)},0.52)`;
+  ctx.lineCap='round'; ctx.stroke();
+
+  const leafWave  = Math.sin(t*0.00155+0.3)*0.065;
+  drawLeaf3D(ctx, 0, -stemH*0.55, stemH*0.50, -1, pal,  leafWave);
+  drawLeaf3D(ctx, 0, -stemH*0.55, stemH*0.50,  1, pal, -leafWave);
+
+  const leafWave2 = Math.sin(t*0.00162+1.5)*0.055;
+  drawLeaf3D(ctx, 0, -stemH*0.82, stemH*0.32, -1, pal,  leafWave2);
+  drawLeaf3D(ctx, 0, -stemH*0.82, stemH*0.32,  1, pal, -leafWave2);
+
+  const pulse = 0.80+Math.sin(t*0.0022)*0.20;
+  const budR  = 22*pulse;
+  const budGrd = ctx.createRadialGradient(0,-stemH-9,0,0,-stemH-9,budR);
+  budGrd.addColorStop(0,`rgba(${pal.lf[0]},${pal.lf[1]},${pal.lf[2]},0.78)`);
+  budGrd.addColorStop(0.42,`rgba(${pal.lf[0]},${pal.lf[1]},${pal.lf[2]},0.22)`);
+  budGrd.addColorStop(1,'rgba(0,0,0,0)');
+  ctx.beginPath(); ctx.arc(0,-stemH-9,budR,0,Math.PI*2); ctx.fillStyle=budGrd; ctx.fill();
+  ctx.beginPath(); ctx.arc(0,-stemH-9,5.5,0,Math.PI*2);
+  ctx.fillStyle=`rgba(${pal.lf[0]},${pal.lf[1]},${pal.lf[2]},0.95)`; ctx.fill();
+  ctx.beginPath(); ctx.arc(-1.8,-stemH-11.5,2.2,0,Math.PI*2);
+  ctx.fillStyle=`rgba(255,255,255,${0.52*pulse})`; ctx.fill();
+
+  ctx.restore();
+}
+
 // ── Stage renderers ──
 
 function drawSeed(ctx, W, H, pal) {
@@ -264,6 +410,23 @@ export function drawTree(canvas, totalDaysThisYear, vitality7) {
   switch (stage) {
     case 'seed':    drawSeed(ctx, W, H, pal);    break;
     case 'sprout':  drawSprout(ctx, W, H, pal);  break;
+    case 'sapling': drawSapling(ctx, W, H, pal); break;
+    case 'young':   drawYoung(ctx, W, H, pal);   break;
+    case 'mature':  drawMature(ctx, W, H, pal);  break;
+    case 'ancient': drawAncient(ctx, W, H, pal); break;
+  }
+}
+
+export function drawAnimated(canvas, totalDaysThisYear, vitality7, t) {
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0, 0, W, H);
+  const stage = getStage(totalDaysThisYear);
+  const pal   = getPalette(vitality7);
+  if (stage === 'seed')   { drawSeed3D(ctx, W, H, pal, t);   return; }
+  if (stage === 'sprout') { drawSprout3D(ctx, W, H, pal, t); return; }
+  // static stages — delegate to drawTree (already clears)
+  switch (stage) {
     case 'sapling': drawSapling(ctx, W, H, pal); break;
     case 'young':   drawYoung(ctx, W, H, pal);   break;
     case 'mature':  drawMature(ctx, W, H, pal);  break;

@@ -1,4 +1,4 @@
-import { drawTree, getTrunkBounds, getStage } from './tree.js';
+import { drawTree, drawAnimated, getTrunkBounds, getStage } from './tree.js';
 import { WeatherManager } from './weather.js';
 
 const STORAGE_KEY   = 'daily_tree_entries';
@@ -123,13 +123,106 @@ function showSaveSuccess() {
   setTimeout(() => showToast('已保存！你的树又长大了一点。', 'success'), 300);
 }
 
+// ── Background Particles ──────────────────────────────────────────────────
+
+function initBgParticles(canvas) {
+  const ctx = canvas.getContext('2d');
+  const particles = [];
+
+  function resize() {
+    const dpr = devicePixelRatio || 1;
+    canvas.width  = Math.round(canvas.clientWidth  * dpr);
+    canvas.height = Math.round(canvas.clientHeight * dpr);
+  }
+
+  function spawn() {
+    const W = canvas.width || 400, H = canvas.height || 800;
+    const dpr = devicePixelRatio || 1;
+    return {
+      x: Math.random() * W,
+      y: H * (0.25 + Math.random() * 0.75),
+      vy: -(0.10 + Math.random() * 0.32) * dpr,
+      vx: (Math.random() - 0.5) * 0.14 * dpr,
+      r: (0.7 + Math.random() * 2.0) * dpr,
+      alpha: 0.10 + Math.random() * 0.28,
+      life: 0,
+      maxLife: 200 + Math.random() * 340,
+      hue: 115 + Math.random() * 48,
+    };
+  }
+
+  resize();
+  for (let i = 0; i < 42; i++) {
+    const p = spawn();
+    p.y = Math.random() * (canvas.height || 800);
+    p.life = Math.random() * p.maxLife;
+    particles.push(p);
+  }
+  window.addEventListener('resize', resize);
+
+  function frame() {
+    const W = canvas.width, H = canvas.height;
+    if (!W || !H) { requestAnimationFrame(frame); return; }
+    const dpr = devicePixelRatio || 1;
+
+    const bg = ctx.createLinearGradient(0, 0, 0, H);
+    bg.addColorStop(0,   '#030a05');
+    bg.addColorStop(0.55, '#060f07');
+    bg.addColorStop(1,   '#071309');
+    ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H);
+
+    const bGld = ctx.createRadialGradient(W/2, H, 0, W/2, H, W * 0.62);
+    bGld.addColorStop(0, 'rgba(22, 72, 22, 0.16)');
+    bGld.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = bGld; ctx.fillRect(0, 0, W, H);
+
+    for (let i = 0; i < particles.length; i++) {
+      const p = particles[i];
+      p.x += p.vx + Math.sin(p.life * 0.022) * 0.22 * dpr;
+      p.y += p.vy;
+      p.life++;
+      const lr   = p.life / p.maxLife;
+      const fade = lr < 0.14 ? lr / 0.14 : lr > 0.78 ? (1 - lr) / 0.22 : 1;
+      const grd  = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.r * 2.4);
+      grd.addColorStop(0, `hsla(${p.hue},62%,68%,${p.alpha * fade})`);
+      grd.addColorStop(1, 'hsla(0,0%,0%,0)');
+      ctx.beginPath(); ctx.arc(p.x, p.y, p.r * 2.4, 0, Math.PI * 2);
+      ctx.fillStyle = grd; ctx.fill();
+      if (p.life >= p.maxLife || p.y < -10) particles[i] = spawn();
+    }
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+}
+
 // ── Tree / App Core ───────────────────────────────────────────────────────
 
 let weatherManager = null;
+let treeAnimRafId  = null;
+
+function startTreeAnimation() {
+  if (treeAnimRafId) { cancelAnimationFrame(treeAnimRafId); treeAnimRafId = null; }
+  const canvas = document.getElementById('tree-canvas');
+  if (!canvas) return;
+  const total    = computeTotalDaysThisYear();
+  const vitality = computeVitality7();
+  const stage    = getStage(total);
+
+  if (stage === 'seed' || stage === 'sprout') {
+    function frame(t) {
+      drawAnimated(canvas, total, vitality, t);
+      treeAnimRafId = requestAnimationFrame(frame);
+    }
+    treeAnimRafId = requestAnimationFrame(frame);
+  } else {
+    drawTree(canvas, total, vitality);
+  }
+}
 
 function initApp() {
   const treeCanvas    = document.getElementById('tree-canvas');
   const weatherCanvas = document.getElementById('weather-canvas');
+  const bgCanvas      = document.getElementById('bg-canvas');
   if (!treeCanvas) return;
 
   function resizeCanvases() {
@@ -139,6 +232,7 @@ function initApp() {
     treeCanvas.width    = W; treeCanvas.height    = H;
     if (weatherCanvas) { weatherCanvas.width = W; weatherCanvas.height = H; }
   }
+  if (bgCanvas) initBgParticles(bgCanvas);
   if (weatherCanvas) {
     weatherManager = new WeatherManager(weatherCanvas);
     weatherManager.init();
@@ -150,11 +244,8 @@ function initApp() {
 }
 
 function refreshTree() {
-  const canvas = document.getElementById('tree-canvas');
-  if (!canvas) return;
-  const total    = computeTotalDaysThisYear();
-  const vitality = computeVitality7();
-  drawTree(canvas, total, vitality);
+  const total = computeTotalDaysThisYear();
+  startTreeAnimation();
   updateTopBar();
   updateBottomBar();
   updateEmptyHint(total);
