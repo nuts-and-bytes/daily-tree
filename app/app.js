@@ -519,60 +519,6 @@ function submitEntry() {
   }
 }
 
-// ── Search ────────────────────────────────────────────────────────────────
-
-function openSearch() {
-  document.getElementById('search-overlay')?.classList.add('active');
-  document.getElementById('search-input')?.focus();
-  renderSearchResults('');
-}
-
-function closeSearch() {
-  document.getElementById('search-overlay')?.classList.remove('active');
-  const input = document.getElementById('search-input');
-  if (input) input.value = '';
-}
-
-function renderSearchResults(query) {
-  const list = document.getElementById('search-results');
-  if (!list) return;
-  list.innerHTML = '';
-  const q = query.trim().toLowerCase();
-  if (!q) return;
-
-  const entries = loadEntries();
-  const results = [];
-  Object.keys(entries).sort((a,b) => b - a).forEach(year => {
-    (entries[year] || []).forEach(entry => {
-      if (entry.text.toLowerCase().includes(q)) results.push({ year: parseInt(year), entry });
-    });
-  });
-
-  if (results.length === 0) {
-    const li = document.createElement('li');
-    li.className = 'search-no-results';
-    li.textContent = '没有找到相关记录。';
-    list.appendChild(li);
-    return;
-  }
-
-  results.slice(0, 30).forEach(({ entry }) => {
-    const li      = document.createElement('li');
-    li.className  = 'search-result-item';
-    const date    = new Date(entry.date);
-    const dateStr = date.toLocaleDateString('zh-CN', { year: 'numeric', month: 'short', day: 'numeric' });
-    const escaped = escapeHtml(entry.text);
-    const highlighted = escaped.replace(
-      new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'), 'gi'),
-      m => `<mark>${m}</mark>`
-    );
-    li.innerHTML = `
-      <div class="search-result-date">${dateStr}</div>
-      <div class="search-result-text">${highlighted}</div>
-    `;
-    list.appendChild(li);
-  });
-}
 
 // ── Settings ──────────────────────────────────────────────────────────────
 
@@ -707,14 +653,6 @@ function bindEvents() {
     if (e.key === 'Escape') closeModal();
   });
 
-  document.getElementById('search-close')?.addEventListener('click', closeSearch);
-  document.getElementById('search-overlay')?.addEventListener('click', e => {
-    if (e.target.id === 'search-overlay') closeSearch();
-  });
-  document.getElementById('search-input')?.addEventListener('input', e => {
-    renderSearchResults(e.target.value);
-  });
-
   document.getElementById('btn-settings')?.addEventListener('click', openSettings);
   document.getElementById('settings-close')?.addEventListener('click', closeSettings);
   document.getElementById('settings-overlay')?.addEventListener('click', e => {
@@ -741,9 +679,8 @@ function bindEvents() {
   });
 
   document.addEventListener('keydown', e => {
-    if (e.key === 'Escape') { closeModal(); closeBranchPanel(); closeSearch(); closeSettings(); closeGuide(); }
-    if ((e.metaKey || e.ctrlKey) && e.key === 'n') { e.preventDefault(); openModal(getTodayEntry()); }
-    if ((e.metaKey || e.ctrlKey) && e.key === 'f') { e.preventDefault(); openSearch(); }
+    if (e.key === 'Escape') { closeModal(); closeBranchPanel(); closeSettings(); closeGuide(); }
+    if ((e.metaKey || e.ctrlKey) && e.key === 'n') { e.preventDefault(); openModal(getTodayEntry(), false); }
   });
 }
 
