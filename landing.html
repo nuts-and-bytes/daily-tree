@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Daily Tree — Watch your life grow</title>
+<link rel="preconnect" href="https://fonts.loli.net">
+<link href="https://fonts.loli.net/css2?family=Outfit:wght@400;500;600;700&family=Fraunces:ital,wght@0,400;0,600;1,400;1,600&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
 html,body{height:100%;overflow:hidden;}
@@ -143,6 +145,12 @@ body{background:#000;font-family:'Outfit',sans-serif;color:#e8e8ec;}
   transition:color .2s;
 }
 #philosophy-btn:hover{color:rgba(255,255,255,0.65);}
+#letter-link{
+  font-size:11px;color:rgba(255,255,255,0.25);background:none;border:none;cursor:pointer;
+  font-family:'Outfit',sans-serif;letter-spacing:.06em;padding:2px 10px;
+  transition:color .2s;
+}
+#letter-link:hover{color:rgba(255,255,255,0.55);}
 #cards-stage.collapsed{visibility:hidden;}
 
 /* ══════════ LETTER MODAL ══════════ */
@@ -450,6 +458,7 @@ body{background:#000;font-family:'Outfit',sans-serif;color:#e8e8ec;}
 <div id="hero-cta">
   <a href="#" class="btn-p" onclick="goApp();return false;">立即开始</a>
   <button id="philosophy-btn" onclick="togglePhilosophy()">💡 了解产品理念</button>
+  <button id="letter-link" onclick="showLetter()">✉ 读作者的信</button>
 </div>
 
 <div id="cards-stage" class="collapsed">
