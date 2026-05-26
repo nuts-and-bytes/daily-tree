@@ -29,6 +29,7 @@ body{background:#000;font-family:'Outfit',sans-serif;color:#e8e8ec;}
   display:flex;flex-direction:column;
   align-items:center;justify-content:center;
   gap:40px;
+  padding-bottom:160px;
   transition:transform 0.8s cubic-bezier(0.4,0,0.2,1),opacity 0.8s ease;
 }
 #stage.shift-up{transform:translateY(-14vh);}
@@ -134,23 +135,28 @@ body{background:#000;font-family:'Outfit',sans-serif;color:#e8e8ec;}
 
 #hero-cta{
   position:fixed;bottom:48px;left:50%;transform:translateX(-50%) translateY(24px);z-index:50;
-  display:flex;flex-direction:column;align-items:center;gap:10px;
+  display:flex;flex-direction:column;align-items:center;gap:12px;
   opacity:0;pointer-events:none;
   transition:opacity 0.6s ease,transform 0.6s cubic-bezier(0.34,1.4,0.64,1);
 }
 #hero-cta.show{opacity:1;pointer-events:all;transform:translateX(-50%) translateY(0);}
-#philosophy-btn{
-  font-size:12px;color:rgba(255,255,255,0.38);background:none;border:none;cursor:pointer;
-  font-family:'Outfit',sans-serif;letter-spacing:.05em;padding:4px 10px;
-  transition:color .2s;
+.hero-secondary{display:flex;gap:8px;}
+#philosophy-btn,#letter-link{
+  font-size:12px;font-weight:500;letter-spacing:.03em;
+  color:rgba(255,255,255,0.6);
+  background:rgba(255,255,255,0.07);
+  border:1px solid rgba(255,255,255,0.16);
+  border-radius:999px;cursor:pointer;
+  font-family:'Outfit',sans-serif;
+  padding:9px 18px;
+  transition:background .2s,border-color .2s,color .2s;
+  white-space:nowrap;
 }
-#philosophy-btn:hover{color:rgba(255,255,255,0.65);}
-#letter-link{
-  font-size:11px;color:rgba(255,255,255,0.25);background:none;border:none;cursor:pointer;
-  font-family:'Outfit',sans-serif;letter-spacing:.06em;padding:2px 10px;
-  transition:color .2s;
+#philosophy-btn:hover,#letter-link:hover{
+  background:rgba(255,255,255,0.13);
+  border-color:rgba(255,255,255,0.32);
+  color:#fff;
 }
-#letter-link:hover{color:rgba(255,255,255,0.55);}
 #cards-stage.collapsed{visibility:hidden;}
 
 /* ══════════ LETTER MODAL ══════════ */
@@ -457,8 +463,10 @@ body{background:#000;font-family:'Outfit',sans-serif;color:#e8e8ec;}
 
 <div id="hero-cta">
   <a href="#" class="btn-p" onclick="goApp();return false;">立即开始</a>
-  <button id="philosophy-btn" onclick="togglePhilosophy()">💡 了解产品理念</button>
-  <button id="letter-link" onclick="showLetter()">✉ 读作者的信</button>
+  <div class="hero-secondary">
+    <button id="philosophy-btn" onclick="togglePhilosophy()">💡 了解产品理念</button>
+    <button id="letter-link" onclick="showLetter()">✉ 读作者的信</button>
+  </div>
 </div>
 
 <div id="cards-stage" class="collapsed">
