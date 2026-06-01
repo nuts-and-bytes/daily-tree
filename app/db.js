@@ -51,7 +51,11 @@ export async function deleteImage(id) {
 }
 
 export async function getDBSizeEstimate() {
-  if (!navigator.storage?.estimate) return 0;
-  const { usage } = await navigator.storage.estimate();
-  return usage || 0;
+  try {
+    if (!navigator.storage?.estimate) return 0;
+    const { usage } = await navigator.storage.estimate();
+    return usage || 0;
+  } catch {
+    return 0;
+  }
 }
