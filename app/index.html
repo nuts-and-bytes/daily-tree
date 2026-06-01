@@ -115,9 +115,21 @@
     <textarea class="modal-textarea" id="entry-text"
       placeholder="一个瞬间，一个想法，一件值得记住的事……"
       maxlength="500"></textarea>
-    <div class="modal-footer">
-      <span class="char-count"><span id="char-count">0</span> / 500</span>
-      <button class="modal-submit" id="entry-submit">保存</button>
+
+    <!-- 图片预览区 -->
+    <div class="modal-images" id="modal-images"></div>
+
+    <!-- 工具栏 -->
+    <div class="modal-toolbar" id="modal-toolbar">
+      <button class="toolbar-btn" id="btn-emoji" type="button" aria-label="插入表情">😊</button>
+      <label class="toolbar-btn" id="btn-image" aria-label="添加图片">
+        📷
+        <input type="file" id="image-file-input" accept="image/*" multiple style="display:none">
+      </label>
+      <div class="modal-footer">
+        <span class="char-count"><span id="char-count">0</span> / 500</span>
+        <button class="modal-submit" id="entry-submit">保存</button>
+      </div>
     </div>
   </div>
 </div>
@@ -222,6 +234,12 @@
     </div>
   </div>
   <div class="stage-panel-path" id="stage-panel-path"></div>
+</div>
+
+<!-- 全屏图片预览 -->
+<div class="img-preview-overlay hidden" id="img-preview-overlay">
+  <img class="img-preview-full" id="img-preview-full" alt="图片预览">
+  <button class="img-preview-close" id="img-preview-close" aria-label="关闭">✕</button>
 </div>
 
 <script type="module" src="app.js"></script>
