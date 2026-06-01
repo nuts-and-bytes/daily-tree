@@ -9,12 +9,12 @@ const VISITED_KEY   = 'daily_tree_visited';
 const ONBOARDED_KEY = 'daily_tree_onboarded';
 
 const STAGE_CONFIG = [
-  { key:'seed',    name:'种子',   emoji:'🌰', unlock:1,   renderDays:1,   desc:'万物始于一粒种子' },
-  { key:'sprout',  name:'嫩芽',   emoji:'🌱', unlock:3,   renderDays:3,   desc:'破土而出，生命开始' },
-  { key:'sapling', name:'幼苗',   emoji:'🪴', unlock:7,   renderDays:15,  desc:'第一片叶，扎根成形' },
-  { key:'young',   name:'青树',   emoji:'🌿', unlock:30,  renderDays:50,  desc:'枝条分叉，树冠成型' },
-  { key:'mature',  name:'壮年树', emoji:'🌳', unlock:90,  renderDays:180, desc:'繁茂深根，见证岁月' },
-  { key:'ancient', name:'古树',   emoji:'🌲', unlock:300, renderDays:400, desc:'历经风雨，屹立不倒' },
+  { key:'seed',    name:'种子',   emoji:'🌰', unlock:0,   renderDays:0,   desc:'万物始于一粒种子' },
+  { key:'sprout',  name:'嫩芽',   emoji:'🌱', unlock:2,   renderDays:4,   desc:'破土而出，生命开始' },
+  { key:'sapling', name:'幼苗',   emoji:'🪴', unlock:8,   renderDays:15,  desc:'第一片叶，扎根成形' },
+  { key:'young',   name:'青树',   emoji:'🌿', unlock:31,  renderDays:50,  desc:'枝条分叉，树冠成型' },
+  { key:'mature',  name:'壮年树', emoji:'🌳', unlock:91,  renderDays:180, desc:'繁茂深根，见证岁月' },
+  { key:'ancient', name:'古树',   emoji:'🌲', unlock:301, renderDays:400, desc:'历经风雨，屹立不倒' },
 ];
 
 // ── Data ──────────────────────────────────────────────────────────────────

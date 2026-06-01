@@ -262,30 +262,28 @@ function drawCrack(ctx, W, H) {
 }
 
 // ── Stage: Sprout (2–7 days) ─────────────────────────────────────────────────
+// Uses same growBranch/drawCrown system as later stages — tiny but organic
 function drawSprout(ctx, W, H) {
-  const bx = W / 2, by = H - 28, stemH = H * 0.18;
-  drawAmbient(ctx, bx, by, W, H);
-  const gGrd = ctx.createLinearGradient(bx - 55, by, bx + 55, by);
-  gGrd.addColorStop(0, 'rgba(0,0,0,0)'); gGrd.addColorStop(0.3, 'rgba(105,78,48,0.28)');
-  gGrd.addColorStop(0.7, 'rgba(105,78,48,0.28)'); gGrd.addColorStop(1, 'rgba(0,0,0,0)');
-  ctx.fillStyle = gGrd; ctx.fillRect(bx - 55, by, 110, 5);
-  ctx.beginPath(); ctx.moveTo(bx, by); ctx.lineTo(bx, by - stemH);
-  ctx.lineWidth = 5; ctx.strokeStyle = 'rgba(105,78,48,0.82)'; ctx.lineCap = 'round'; ctx.stroke();
-  const ty = by - stemH;
-  for (const [sign, tilt] of [[-1, 0.5], [1, -0.5]]) {
-    const lw = stemH * 0.58, lh = stemH * 0.35;
-    const lx = bx + sign * stemH * 0.38, ly = ty + stemH * 0.08;
-    ctx.beginPath(); ctx.ellipse(lx, ly, lw, lh, tilt, 0, Math.PI * 2);
-    ctx.fillStyle = 'rgba(108,195,90,0.62)'; ctx.fill();
-    ctx.strokeStyle = 'rgba(150,230,130,0.35)'; ctx.lineWidth = 1; ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(bx, ty); ctx.lineTo(lx + sign * lw * 0.45, ly);
-    ctx.lineWidth = 0.8; ctx.strokeStyle = 'rgba(150,230,130,0.22)'; ctx.stroke();
-  }
-  const budGrd = ctx.createRadialGradient(bx, ty - 6, 0, bx, ty - 6, 14);
-  budGrd.addColorStop(0, 'rgba(108,195,90,0.5)'); budGrd.addColorStop(1, 'rgba(0,0,0,0)');
-  ctx.beginPath(); ctx.arc(bx, ty - 6, 14, 0, Math.PI * 2); ctx.fillStyle = budGrd; ctx.fill();
-  ctx.beginPath(); ctx.arc(bx, ty - 6, 5, 0, Math.PI * 2);
-  ctx.fillStyle = 'rgba(108,195,90,0.85)'; ctx.fill();
+  const cx = W / 2, gy = H - 35;
+  drawAmbient(ctx, cx, gy, W, H);
+  drawGround(ctx, cx, gy, W);
+
+  const trunkH = 42, topX = cx + 1, topY = gy - trunkH;
+  ctx.beginPath(); ctx.moveTo(cx, gy); ctx.lineTo(topX, topY);
+  ctx.lineWidth = 6; ctx.strokeStyle = 'rgba(105,78,48,0.80)'; ctx.lineCap = 'round'; ctx.stroke();
+
+  const tips = [], segs = [];
+  const seed = 42;
+  // 2 branches at depth=1 → 4 tip clusters
+  const brDefs = [
+    { t: 0.88, ang: -Math.PI / 2 + 0.50, lenR: 0.60, wR: 0.55 },
+    { t: 0.88, ang: -Math.PI / 2 - 0.50, lenR: 0.57, wR: 0.53 },
+  ];
+  brDefs.forEach((def, idx) => {
+    growBranch(ctx, lerp(cx, topX, def.t), lerp(gy, topY, def.t),
+      def.ang, trunkH * def.lenR, 6 * def.wR, 1, rngFrom(seed + idx * 7), tips, segs, 'early');
+  });
+  tips.forEach(pt => drawCrown(ctx, pt.x, pt.y, 16, rngFrom(Math.floor(pt.x * 11 + pt.y * 17 + seed))));
 }
 
 // ── Stage: Sapling (8–30 days) ───────────────────────────────────────────────
@@ -442,31 +440,8 @@ function drawCrackAnimated(ctx, W, H, t) {
 
 // ── Animated: Sprout ──────────────────────────────────────────────────────────
 function drawSproutAnimated(ctx, W, H, t) {
-  const bx = W / 2, by = H - 30, stemH = H * 0.22;
-  const sway = Math.sin(t * 0.00088) * 0.058 + Math.sin(t * 0.00142) * 0.022;
-  drawAmbient(ctx, bx, by, W, H);
-  const soilGrd = ctx.createRadialGradient(bx, by + 4, 0, bx, by + 4, 55);
-  soilGrd.addColorStop(0, 'rgba(105,78,48,0.48)'); soilGrd.addColorStop(1, 'rgba(0,0,0,0)');
-  ctx.beginPath(); ctx.ellipse(bx, by + 6, 55, 15, 0, 0, Math.PI * 2); ctx.fillStyle = soilGrd; ctx.fill();
-  ctx.save(); ctx.translate(bx, by); ctx.rotate(sway);
-  ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(0, -stemH);
-  ctx.lineWidth = 7; ctx.strokeStyle = 'rgba(105,78,48,0.90)'; ctx.lineCap = 'round'; ctx.stroke();
-  const leafWave = Math.sin(t * 0.00155 + 0.3) * 0.065;
-  for (const [side, wave] of [[-1, leafWave], [1, -leafWave]]) {
-    ctx.save(); ctx.translate(0, -stemH * 0.55); ctx.rotate(side * 0.42 + wave);
-    const lw = stemH * 0.40, lh = stemH * 0.26;
-    ctx.beginPath(); ctx.ellipse(side * lw * 0.5, -lh * 0.3, lw, lh, 0, 0, Math.PI * 2);
-    ctx.fillStyle = 'rgba(108,195,90,0.77)'; ctx.fill();
-    ctx.restore();
-  }
-  const pulse = 0.80 + Math.sin(t * 0.0022) * 0.20;
-  const budR = 22 * pulse;
-  const budGrd = ctx.createRadialGradient(0, -stemH - 9, 0, 0, -stemH - 9, budR);
-  budGrd.addColorStop(0, 'rgba(108,195,90,0.78)'); budGrd.addColorStop(0.42, 'rgba(108,195,90,0.22)'); budGrd.addColorStop(1, 'rgba(0,0,0,0)');
-  ctx.beginPath(); ctx.arc(0, -stemH - 9, budR, 0, Math.PI * 2); ctx.fillStyle = budGrd; ctx.fill();
-  ctx.beginPath(); ctx.arc(0, -stemH - 9, 5.5, 0, Math.PI * 2);
-  ctx.fillStyle = 'rgba(108,195,90,0.95)'; ctx.fill();
-  ctx.restore();
+  // Reuse the static organic version — keeps style consistent with sapling/young
+  drawSprout(ctx, W, H);
 }
 
 // ── Public API ───────────────────────────────────────────────────────────────
