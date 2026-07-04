@@ -1,0 +1,80 @@
+<h2>Landing Page 引导卡片 — 三种方案</h2>
+<p class="subtitle">核心矛盾：着急用的用户 vs 你想传递的产品理念。哪种最符合你的想法？</p>
+
+<div class="cards">
+
+  <div class="card" data-choice="a" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div style="background:#0a0f1a;border-radius:16px;padding:16px;font-family:system-ui;max-width:210px;margin:0 auto;">
+        <div style="font-size:10px;color:rgba(255,255,255,0.3);letter-spacing:.1em;text-align:center;margin-bottom:10px;">DAILY TREE</div>
+        <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:12px;margin-bottom:8px;">
+          <div style="font-size:9px;color:rgba(120,175,255,0.6);letter-spacing:.1em;margin-bottom:4px;">每日记录</div>
+          <div style="font-size:13px;color:#e8ecf4;line-height:1.3;margin-bottom:5px;">每天一句话，<em style="color:#90c0f8">足够了。</em></div>
+          <div style="font-size:9px;color:rgba(255,255,255,0.3);line-height:1.5;">不需要长篇大论，低门槛高坚持率。</div>
+          <div style="display:flex;justify-content:space-between;margin-top:8px;padding-top:7px;border-top:1px solid rgba(255,255,255,0.06);">
+            <span style="font-size:8px;color:rgba(255,255,255,0.2);">← 滑动翻阅 →</span>
+            <span style="font-size:8px;color:rgba(255,255,255,0.2);">1/3</span>
+          </div>
+        </div>
+        <button style="width:100%;background:#4a8c5c;color:#fff;border:none;border-radius:9px;padding:11px;font-size:12px;font-weight:600;cursor:pointer;">开始使用 →</button>
+        <div style="text-align:center;margin-top:6px;font-size:9px;color:rgba(255,255,255,0.2);">向上滑动了解更多</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>A. 卡片缩小 + CTA 常驻底部</h3>
+      <p>卡片不再主导视觉，「开始使用」始终固定在底部。着急的用户直接点；有兴趣的滑动看。</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="b" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div style="background:#0a0f1a;border-radius:16px;padding:16px;font-family:system-ui;max-width:210px;margin:0 auto;">
+        <div style="font-size:10px;color:rgba(255,255,255,0.3);letter-spacing:.1em;text-align:center;margin-bottom:12px;">DAILY TREE</div>
+        <div style="text-align:center;margin-bottom:14px;">
+          <div style="font-size:20px;color:#e8ecf4;line-height:1.2;margin-bottom:5px;">你的树，<br>从今天开始生长</div>
+          <div style="font-size:10px;color:rgba(255,255,255,0.35);">每天记一件事，看见自己成长</div>
+        </div>
+        <button style="width:100%;background:#4a8c5c;color:#fff;border:none;border-radius:9px;padding:12px;font-size:13px;font-weight:600;cursor:pointer;margin-bottom:10px;">立即开始 →</button>
+        <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:9px;padding:10px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <span style="font-size:10px;color:rgba(255,255,255,0.35);">💡 了解产品理念</span>
+            <span style="font-size:10px;color:rgba(255,255,255,0.25);">▾</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>B. 大 CTA 优先 + 折叠理念区 ⭐推荐</h3>
+      <p>打开即见「立即开始」，下方有折叠的「了解产品理念」。零阻碍进入，理念保留给主动探索的用户。</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="c" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div style="background:#0a0f1a;border-radius:16px;padding:16px;font-family:system-ui;max-width:210px;margin:0 auto;">
+        <div style="font-size:10px;color:rgba(255,255,255,0.3);letter-spacing:.1em;text-align:center;margin-bottom:10px;">DAILY TREE</div>
+        <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:12px;margin-bottom:8px;position:relative;">
+          <div style="position:absolute;top:8px;right:10px;font-size:9px;color:rgba(255,255,255,0.3);cursor:pointer;background:rgba(255,255,255,0.06);padding:2px 7px;border-radius:10px;">跳过</div>
+          <div style="font-size:9px;color:rgba(255,160,50,0.7);letter-spacing:.1em;margin-bottom:4px;">连续打卡</div>
+          <div style="font-size:13px;color:#e8ecf4;line-height:1.3;margin-bottom:5px;">坚持，<em style="color:#f0b060">别中断。</em></div>
+          <div style="font-size:9px;color:rgba(255,255,255,0.3);line-height:1.5;">每一天的积累都是真实的成长。</div>
+          <div style="display:flex;justify-content:center;gap:5px;margin-top:10px;">
+            <div style="width:14px;height:2px;border-radius:2px;background:rgba(255,255,255,0.2)"></div>
+            <div style="width:14px;height:2px;border-radius:2px;background:rgba(255,255,255,0.2)"></div>
+            <div style="width:14px;height:2px;border-radius:2px;background:#4a8c5c"></div>
+          </div>
+        </div>
+        <button style="width:100%;background:rgba(74,140,92,0.25);color:rgba(255,255,255,0.55);border:1px solid rgba(74,140,92,0.3);border-radius:9px;padding:11px;font-size:12px;cursor:pointer;">开始使用 →</button>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>C. 保持原有卡片 + 右上角跳过</h3>
+      <p>改动最小，仅加「跳过」按钮。「第47天别断掉」改成「坚持，别中断」（见右上角预览）。</p>
+    </div>
+  </div>
+
+</div>
+
+<div style="margin-top:18px;padding:13px;background:rgba(255,200,100,0.07);border:1px solid rgba(255,200,100,0.18);border-radius:10px;font-size:13px;color:rgba(255,220,150,0.8);">
+  💡 推荐 <strong>B</strong>：CTA 最大，理念折叠保留，对着急用户零摩擦，对认同产品价值观的用户有发现感。
+</div>

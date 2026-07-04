@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tree Crown Fix</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    background: #080e08;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh;
+    font-family: -apple-system, sans-serif;
+    padding: 32px 16px;
+    gap: 24px;
+  }
+  h1 { color:#5db84a; font-size:13px; letter-spacing:3px; text-transform:uppercase; opacity:0.6; }
+  .row { display:flex; gap:40px; justify-content:center; flex-wrap:wrap; }
+  .stage { display:flex; flex-direction:column; align-items:center; gap:10px; }
+  canvas { border-radius:20px; display:block; }
+  .label { color:#6fcf5a; font-size:13px; letter-spacing:1px; font-weight:500; }
+  .days  { color:#2d4a2d; font-size:11px; margin-top:-6px; }
+</style>
+</head>
+<body>
+<h1>Daily Tree · Mature & Ancient</h1>
+<div class="row" id="stages"></div>
+
+<script>
+// ─── Seeded RNG ───────────────────────────────────────────────────────────────
+function rngFrom(seed) {
+  let s = seed >>> 0;
+  return () => { s = (Math.imul(s,1664525)+1013904223)>>>0; return s/4294967296; };
+}
+
+// ─── Ground ───────────────────────────────────────────────────────────────────
+function drawGround(ctx, cx, gy, W) {
+  // shadow oval
+  const sh = ctx.createRadialGradient(cx,gy+4,0,cx,gy+4,W*0.44);
+  sh.addColorStop(0,'rgba(0,0,0,0.6)'); sh.addColorStop(1,'rgba(0,0,0,0)');
+  ctx.fillStyle=sh; ctx.beginPath(); ctx.ellipse(cx,gy+6,W*0.44,15,0,0,Math.PI*2); ctx.fill();
+  // soil
+  const gr=ctx.createLinearGradient(0,gy-3,0,gy+24);
+  gr.addColorStop(0,'#1e1409'); gr.addColorStop(0.5,'#271908'); gr.addColorStop(1,'#0b0905');
+  ctx.fillStyle=gr; ctx.beginPath(); ctx.ellipse(cx,gy+9,W*0.38,13,0,0,Math.PI*2); ctx.fill();
+  ctx.strokeStyle='rgba(100,70,35,0.22)'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.ellipse(cx,gy,W*0.34,5,0,0,Math.PI); ctx.stroke();
+}
+
+// ─── Roots ────────────────────────────────────────────────────────────────────
+function drawRoots(ctx, cx, gy, nRoots, scale, rng) {
+  const baseAngles=[-72,-46,-22,22,48,74];
+  for(let i=0;i<nRoots;i++){
+    const a=baseAngles[i]*Math.PI/180;
+    const len=(24+rng()*14)*scale;
+    const w=(3.5+rng()*1.8)*scale;
+    const ex=cx+Math.cos(a)*len;
+    const ey=gy+Math.abs(Math.sin(a))*len*0.52;
+    const cpx=cx+Math.cos(a)*len*0.48+(rng()-0.5)*12;
+    const cpy=gy+Math.abs(Math.sin(a))*len*0.22;
+    const rg=ctx.createLinearGradient(cx,gy,ex,ey);
+    rg.addColorStop(0,'rgba(90,64,30,0.95)'); rg.addColorStop(0.6,'rgba(65,44,20,0.7)'); rg.addColorStop(1,'rgba(38,24,10,0)');
+    ctx.strokeStyle=rg; ctx.lineWidth=w; ctx.lineCap='round';
+    ctx.beginPath(); ctx.moveTo(cx,gy); ctx.quadraticCurveTo(cpx,cpy,ex,ey); ctx.stroke();
+    if(scale>0.8){
+      const sa=a+(rng()-0.5)*0.7, sl=len*0.4;
+      ctx.strokeStyle=`rgba(55,36,14,${0.32*scale})`; ctx.lineWidth=w*0.35;
+      ctx.beginPath(); ctx.moveTo(ex,ey); ctx.lineTo(ex+Math.cos(sa)*sl,ey+Math.abs(Math.sin(sa))*sl*0.45); ctx.stroke();
+    }
+  }
+}
+
+// ─── Trunk ────────────────────────────────────────────────────────────────────
+function drawTrunk(ctx, cx, baseY, topY, baseW, lean, rng) {
+  const topX  = cx+lean;
+  const topW  = baseW*0.26;
+  const m1x   = cx+lean*0.28+(rng()-0.5)*3;
+  const m1y   = baseY-(baseY-topY)*0.35;
+  const m2x   = cx+lean*0.65+(rng()-0.5)*2.5;
+  const m2y   = baseY-(baseY-topY)*0.68;
+
+  // build left/right edge curves
+  function edge(side) {
+    const sw = side;
+    const pts=[];
+    for(let i=0;i<=20;i++){
+      const t=i/20, mt=1-t;
+      const w=lerp(baseW,topW,t);
+      const bx=mt*mt*mt*cx + 3*mt*mt*t*m1x + 3*mt*t*t*m2x + t*t*t*topX;
+      const by=mt*mt*mt*baseY + 3*mt*mt*t*m1y + 3*mt*t*t*m2y + t*t*t*topY;
+      pts.push({x:bx+sw*w/2, y:by});
+    }
+    return pts;
+  }
+  const left=edge(-1), right=edge(1);
+
+  ctx.beginPath();
+  ctx.moveTo(left[0].x,left[0].y);
+  left.forEach(p=>ctx.lineTo(p.x,p.y));
+  [...right].reverse().forEach(p=>ctx.lineTo(p.x,p.y));
+  ctx.closePath();
+
+  // cylinder gradient
+  const g=ctx.createLinearGradient(cx-baseW/2,0,cx+baseW/2,0);
+  g.addColorStop(0,   'rgb(35,22,9)');
+  g.addColorStop(0.12,'rgb(60,40,18)');
+  g.addColorStop(0.30,'rgb(95,66,34)');
+  g.addColorStop(0.52,'rgb(130,92,52)');
+  g.addColorStop(0.72,'rgb(100,70,36)');
+  g.addColorStop(0.88,'rgb(58,38,16)');
+  g.addColorStop(1,   'rgb(30,18,6)');
+  ctx.fillStyle=g; ctx.fill();
+
+  // bark streaks
+  const nStr=Math.floor(baseW*0.65);
+  for(let i=0;i<nStr;i++){
+    const t=(i+rng()*0.5)/nStr;
+    const lp=left[Math.floor(t*19)], rp=right[Math.floor(t*19)];
+    const sx=lerp(lp.x,rp.x,0.08+rng()*0.84);
+    const h=(baseY-topY)*(0.06+rng()*0.28);
+    const sy=topY+rng()*(baseY-topY-h);
+    const light=rng()<0.55;
+    ctx.beginPath(); ctx.moveTo(sx+(rng()-0.5),sy); ctx.lineTo(sx+(rng()-0.5)*1.5,sy+h);
+    ctx.strokeStyle=`rgba(${light?210:25},${light?165:14},${light?90:5},${0.06+rng()*0.07})`;
+    ctx.lineWidth=0.45+rng()*0.45; ctx.stroke();
+  }
+  // highlight
+  ctx.beginPath(); left.slice(2,-2).forEach((p,i)=>i===0?ctx.moveTo(p.x+1.8,p.y):ctx.lineTo(p.x+1.8,p.y));
+  ctx.strokeStyle='rgba(180,140,75,0.14)'; ctx.lineWidth=1.3; ctx.stroke();
+
+  return {topX,topY};
+}
+
+// ─── Single branch segment ────────────────────────────────────────────────────
+function branchSeg(ctx, x0,y0,x1,y1, w0,w1, rng) {
+  if(w0<0.5) return;
+  const ang=Math.atan2(y1-y0,x1-x0), perp=ang+Math.PI/2;
+  const cd=p=>[Math.cos(p),Math.sin(p)];
+  const [cpx,cpy]=cd(perp);
+  ctx.beginPath();
+  ctx.moveTo(x0+cpx*w0/2,  y0+cpy*w0/2);
+  ctx.quadraticCurveTo((x0+x1)/2+cpx*(w0+w1)*0.22,(y0+y1)/2+cpy*(w0+w1)*0.22, x1+cpx*w1/2,y1+cpy*w1/2);
+  ctx.lineTo(x1-cpx*w1/2,  y1-cpy*w1/2);
+  ctx.quadraticCurveTo((x0+x1)/2-cpx*(w0+w1)*0.22,(y0+y1)/2-cpy*(w0+w1)*0.22, x0-cpx*w0/2,y0-cpy*w0/2);
+  ctx.closePath();
+  const bright=50+rng()*18;
+  ctx.fillStyle=`rgb(${Math.round(75+bright*0.55)},${Math.round(50+bright*0.38)},${Math.round(26+bright*0.2)})`;
+  ctx.fill();
+}
+
+// ─── Recursive branch + collect tips ─────────────────────────────────────────
+function growBranch(ctx,x,y,angle,len,w,depth,rng,tips) {
+  if(w<0.7||len<4) { if(w>=0.4) tips.push({x,y}); return; }
+  const curve=(rng()-0.5)*0.20;
+  const ex=x+Math.cos(angle+curve)*len;
+  const ey=y+Math.sin(angle+curve)*len;
+  const w1=w*(0.60+rng()*0.06);
+  branchSeg(ctx,x,y,ex,ey,w,w1,rng);
+  if(depth<=0){ tips.push({x:ex,y:ey}); return; }
+  const n=rng()<0.28?3:2;
+  const spread=0.40+rng()*0.20;
+  for(let i=0;i<n;i++){
+    const side=n===2?(i===0?-1:1):(i-1);
+    growBranch(ctx,ex,ey,angle+curve+side*spread*(0.8+rng()*0.4),len*(0.60+rng()*0.10),w1,depth-1,rng,tips);
+  }
+}
+
+// ─── LEAF CLUSTER — bright, dense, layered ────────────────────────────────────
+function drawCrown(ctx, cx, cy, radius, rng) {
+  // 1) Base volume blob — dark green underlay so cluster reads even if leaves are sparse
+  const nb=8+Math.floor(rng()*5);
+  for(let i=0;i<nb;i++){
+    const t=rng()*Math.PI*2;
+    const d=rng()*radius*0.6;
+    const bx=cx+Math.cos(t)*d, by=cy+Math.sin(t)*d*0.75;
+    const br=radius*(0.45+rng()*0.35);
+    const bg=ctx.createRadialGradient(bx-br*0.2,by-br*0.2,0,bx,by,br);
+    bg.addColorStop(0,'rgba(68,148,42,0.55)');
+    bg.addColorStop(0.5,'rgba(45,110,28,0.40)');
+    bg.addColorStop(1,'rgba(25,70,14,0)');
+    ctx.fillStyle=bg;
+    ctx.beginPath(); ctx.ellipse(bx,by,br,br*0.78,rng()*Math.PI,0,Math.PI*2); ctx.fill();
+  }
+
+  // 2) Individual leaf shapes — three passes (back→front)
+  const totalLeaves=Math.floor(55+rng()*30);
+  for(let pass=0;pass<3;pass++){
+    const share=pass===0?0.40:pass===1?0.35:0.25;
+    const n=Math.round(totalLeaves*share);
+    for(let i=0;i<n;i++){
+      const t=rng()*Math.PI*2;
+      const normY=(Math.sin(t)*0.5+0.5);
+      const rx=radius*(0.5+normY*0.5);
+      const ry=radius*0.75;
+      const lx=cx+Math.cos(t)*rx*(0.15+rng()*0.85);
+      const ly=cy+Math.sin(t)*ry*(0.15+rng()*0.85);
+
+      const leafLen=radius*(0.28+rng()*0.24);
+      const leafW=leafLen*(0.36+rng()*0.26);
+      const leafAng=rng()*Math.PI*2;
+
+      // BRIGHT greens — lightness 28-55%
+      const hue=95+rng()*28;
+      const sat=55+rng()*22;
+      const lit=pass===0?(28+rng()*10):pass===1?(36+rng()*12):(44+rng()*11);
+      const alpha=0.88+rng()*0.12;
+
+      ctx.save();
+      ctx.translate(lx,ly); ctx.rotate(leafAng);
+      ctx.beginPath();
+      ctx.ellipse(0,0,leafLen*0.5,leafW*0.5,0,0,Math.PI*2);
+      ctx.fillStyle=`hsla(${hue},${sat}%,${lit}%,${alpha})`;
+      ctx.fill();
+      if(pass===2&&leafLen>8){
+        ctx.beginPath(); ctx.moveTo(-leafLen*0.4,0); ctx.lineTo(leafLen*0.44,0);
+        ctx.strokeStyle=`hsla(${hue},${sat-8}%,${lit+14}%,0.30)`;
+        ctx.lineWidth=0.5; ctx.stroke();
+      }
+      ctx.restore();
+    }
+  }
+
+  // 3) Top highlight
+  const hl=ctx.createRadialGradient(cx-radius*0.18,cy-radius*0.28,0,cx,cy,radius*0.9);
+  hl.addColorStop(0,'rgba(180,255,120,0.10)');
+  hl.addColorStop(0.5,'rgba(120,200,70,0.05)');
+  hl.addColorStop(1,'rgba(0,0,0,0)');
+  ctx.fillStyle=hl; ctx.beginPath(); ctx.ellipse(cx,cy,radius*0.9,radius*0.72,0,0,Math.PI*2); ctx.fill();
+}
+
+// ─── Main draw ────────────────────────────────────────────────────────────────
+function drawTree(ctx, W, H, cfg, seedN) {
+  const rng=rngFrom(seedN);
+  const cx=W/2, gy=H-cfg.groundOff;
+  drawGround(ctx,cx,gy,W);
+  drawRoots(ctx,cx,gy,cfg.roots,cfg.rootScale,rngFrom(seedN+11));
+  const {topX,topY}=drawTrunk(ctx,cx,gy,gy-cfg.trunkH,cfg.trunkW,cfg.lean,rngFrom(seedN+3));
+
+  // explicit main branches
+  const tips=[];
+  const branchDefs=[
+    {t:0.93,ang:-Math.PI/2+0.55,lenR:0.50,wR:0.27},
+    {t:0.93,ang:-Math.PI/2-0.55,lenR:0.48,wR:0.25},
+    {t:0.74,ang:-Math.PI/2+0.68,lenR:0.44,wR:0.20},
+    {t:0.74,ang:-Math.PI/2-0.68,lenR:0.42,wR:0.19},
+    {t:0.55,ang:-Math.PI/2+0.78,lenR:0.36,wR:0.15},
+    {t:0.55,ang:-Math.PI/2-0.78,lenR:0.34,wR:0.14},
+  ].slice(0,cfg.nBranches);
+
+  branchDefs.forEach(def=>{
+    const bx=lerp(cx,topX,def.t)+(rng()-0.5)*2.5;
+    const by=lerp(gy,topY,def.t);
+    const blen=cfg.trunkH*def.lenR;
+    const bw=cfg.trunkW*def.wR;
+    const br2=rngFrom(Math.floor(bx*7+by*13+seedN));
+    growBranch(ctx,bx,by,def.ang+(rng()-0.5)*0.08,blen,bw,cfg.branchDepth,br2,tips);
+  });
+
+  // Crown clusters at each tip
+  tips.forEach(pt=>{
+    const cr2=rngFrom(Math.floor(pt.x*11+pt.y*17+seedN));
+    const r=cfg.trunkH*(0.18+cr2()*0.10);
+    drawCrown(ctx,pt.x,pt.y,r,cr2);
+  });
+}
+
+function lerp(a,b,t){return a+(b-a)*t;}
+
+// ─── Stages ───────────────────────────────────────────────────────────────────
+const stages=[
+  {
+    label:'成年树', days:'第 91–300 天', W:340, H:460,
+    cfg:{trunkH:148,trunkW:22,lean:8,nBranches:6,branchDepth:3,roots:5,rootScale:1.0,groundOff:70},
+    seed:217
+  },
+  {
+    label:'古树',  days:'第 300+ 天', W:380, H:490,
+    cfg:{trunkH:165,trunkW:30,lean:11,nBranches:6,branchDepth:4,roots:6,rootScale:1.45,groundOff:80},
+    seed:503
+  },
+];
+
+const container=document.getElementById('stages');
+stages.forEach(stage=>{
+  const {W,H}=stage;
+  const div=document.createElement('div'); div.className='stage';
+  const cv=document.createElement('canvas'); cv.width=W; cv.height=H;
+  cv.style.background='radial-gradient(ellipse at 50% 88%, #0d1c0d 0%, #060a06 100%)';
+  div.appendChild(cv);
+  const ctx=cv.getContext('2d');
+  drawTree(ctx,stage.W,stage.H,stage.cfg,stage.seed);
+  const lbl=document.createElement('div'); lbl.className='label'; lbl.textContent=stage.label;
+  const days=document.createElement('div'); days.className='days'; days.textContent=stage.days;
+  div.appendChild(lbl); div.appendChild(days);
+  container.appendChild(div);
+});
+</script>
+</body>
+</html>

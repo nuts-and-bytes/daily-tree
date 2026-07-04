@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tree Growth v2</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #080e08;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh;
+    font-family: -apple-system, sans-serif;
+    padding: 24px 12px;
+    gap: 20px;
+  }
+  h1 { color: #5db84a; font-size: 13px; letter-spacing: 3px; text-transform: uppercase; opacity: 0.6; }
+  .stages {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 24px;
+    width: 100%;
+    max-width: 1100px;
+  }
+  .stage {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+  }
+  canvas {
+    border-radius: 18px;
+    background: radial-gradient(ellipse at 50% 85%, #0c180c 0%, #050a05 100%);
+    display: block;
+  }
+  .label { color: #6fcf5a; font-size: 12px; letter-spacing: 1px; font-weight: 500; }
+  .days { color: #2d4a2d; font-size: 10px; margin-top: -6px; }
+</style>
+</head>
+<body>
+<h1>Daily Tree · Growth Stages</h1>
+<div class="stages" id="stages"></div>
+
+<script>
+// ── Utility ──────────────────────────────────────────────────────────────────
+function seededRng(seed) {
+  let s = seed >>> 0;
+  return () => { s = (Math.imul(s, 1664525) + 1013904223) >>> 0; return s / 4294967296; };
+}
+
+// ── Ground shadow ─────────────────────────────────────────────────────────────
+function drawGround(ctx, cx, gy, cw) {
+  const sh = ctx.createRadialGradient(cx, gy+2, 0, cx, gy+2, cw*0.48);
+  sh.addColorStop(0, 'rgba(0,0,0,0.55)'); sh.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = sh; ctx.beginPath();
+  ctx.ellipse(cx, gy+6, cw*0.48, 14, 0, 0, Math.PI*2); ctx.fill();
+  const gr = ctx.createLinearGradient(0, gy-2, 0, gy+22);
+  gr.addColorStop(0, '#1a1108'); gr.addColorStop(0.5, '#231608'); gr.addColorStop(1, '#0a0805');
+  ctx.fillStyle = gr; ctx.beginPath();
+  ctx.ellipse(cx, gy+8, cw*0.42, 12, 0, 0, Math.PI*2); ctx.fill();
+  ctx.strokeStyle = 'rgba(110,80,40,0.25)'; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.ellipse(cx, gy, cw*0.38, 5, 0, 0, Math.PI); ctx.stroke();
+}
+
+// ── TRUNK: real cylindrical bark look ─────────────────────────────────────────
+function drawTrunk(ctx, cx, baseY, topY, baseW, topW, lean, rng) {
+  const topX = cx + lean;
+  const mid1X = cx + lean * 0.25 + (rng()-0.5)*3;
+  const mid1Y = baseY - (baseY-topY)*0.33;
+  const mid2X = cx + lean * 0.65 + (rng()-0.5)*3;
+  const mid2Y = baseY - (baseY-topY)*0.67;
+
+  // left edge points
+  const lPoints = getBezierPoints(
+    cx - baseW/2, baseY,
+    mid1X - lerp(baseW,topW,0.33)/2, mid1Y,
+    mid2X - lerp(baseW,topW,0.67)/2, mid2Y,
+    topX - topW/2, topY, 24
+  );
+  const rPoints = getBezierPoints(
+    cx + baseW/2, baseY,
+    mid1X + lerp(baseW,topW,0.33)/2, mid1Y,
+    mid2X + lerp(baseW,topW,0.67)/2, mid2Y,
+    topX + topW/2, topY, 24
+  );
+
+  // fill trunk body
+  ctx.beginPath();
+  ctx.moveTo(lPoints[0].x, lPoints[0].y);
+  lPoints.forEach(p => ctx.lineTo(p.x, p.y));
+  rPoints.slice().reverse().forEach(p => ctx.lineTo(p.x, p.y));
+  ctx.closePath();
+
+  // horizontal gradient: dark edge → light center → dark edge
+  const g = ctx.createLinearGradient(cx - baseW/2, 0, cx + baseW/2, 0);
+  g.addColorStop(0,    'rgb(42, 28, 12)');
+  g.addColorStop(0.18, 'rgb(72, 50, 24)');
+  g.addColorStop(0.38, 'rgb(105, 74, 40)');
+  g.addColorStop(0.55, 'rgb(125, 90, 50)');
+  g.addColorStop(0.72, 'rgb(100, 70, 36)');
+  g.addColorStop(0.88, 'rgb(65, 44, 20)');
+  g.addColorStop(1,    'rgb(38, 24, 10)');
+  ctx.fillStyle = g; ctx.fill();
+
+  // bark texture — vertical streaks
+  const nStreaks = Math.floor(baseW * 0.7);
+  for(let i = 0; i < nStreaks; i++) {
+    const t = (i + rng()*0.6) / nStreaks;
+    const lp = lPoints[Math.floor(t*(lPoints.length-1))];
+    const rp = rPoints[Math.floor(t*(rPoints.length-1))];
+    const x = lp.x + (rp.x - lp.x) * (rng()*0.15 + 0.07 + 0.78*rng());
+    const segLen = (baseY - topY) * (0.05 + rng()*0.25);
+    const segY0 = topY + rng() * (baseY - topY - segLen);
+    ctx.beginPath();
+    ctx.moveTo(x + (rng()-0.5)*1.5, segY0);
+    ctx.lineTo(x + (rng()-0.5)*2, segY0 + segLen);
+    ctx.strokeStyle = `rgba(${rng()<0.5?200:30},${rng()<0.5?160:20},${rng()<0.5?90:8},${0.07+rng()*0.08})`;
+    ctx.lineWidth = 0.5 + rng()*0.5;
+    ctx.stroke();
+  }
+
+  // highlight ridge on left side
+  ctx.beginPath();
+  lPoints.slice(3,-3).forEach((p,i) => i===0 ? ctx.moveTo(p.x+1.5, p.y) : ctx.lineTo(p.x+1.5, p.y));
+  ctx.strokeStyle = 'rgba(160,120,65,0.18)'; ctx.lineWidth = 1.2; ctx.stroke();
+
+  return { tipX: topX, tipY: topY, mid1X, mid1Y, mid2X, mid2Y };
+}
+
+// ── BRANCH: single tapered branch from point ─────────────────────────────────
+function drawBranch(ctx, x0, y0, angle, length, w0, levels, rng, leafPts) {
+  if (w0 < 0.8 || length < 5) return;
+
+  const bend = (rng()-0.5)*0.22;
+  const ex = x0 + Math.cos(angle + bend*0.5) * length;
+  const ey = y0 + Math.sin(angle + bend*0.5) * length;
+  const w1 = w0 * (0.58 + rng()*0.07);
+
+  // tapered branch body
+  const ang = Math.atan2(ey-y0, ex-x0);
+  const perp = ang + Math.PI/2;
+  ctx.beginPath();
+  ctx.moveTo(x0 + Math.cos(perp)*w0/2, y0 + Math.sin(perp)*w0/2);
+  ctx.quadraticCurveTo(
+    (x0+ex)/2 + Math.cos(perp)*(w0+w1)*0.22,
+    (y0+ey)/2 + Math.sin(perp)*(w0+w1)*0.22,
+    ex + Math.cos(perp)*w1/2, ey + Math.sin(perp)*w1/2
+  );
+  ctx.lineTo(ex - Math.cos(perp)*w1/2, ey - Math.sin(perp)*w1/2);
+  ctx.quadraticCurveTo(
+    (x0+ex)/2 - Math.cos(perp)*(w0+w1)*0.22,
+    (y0+ey)/2 - Math.sin(perp)*(w0+w1)*0.22,
+    x0 - Math.cos(perp)*w0/2, y0 - Math.sin(perp)*w0/2
+  );
+  ctx.closePath();
+
+  const br = Math.round(85 + (1-levels/5)*25 + rng()*10);
+  const bg = Math.round(58 + (1-levels/5)*18 + rng()*7);
+  const bb = Math.round(30 + (1-levels/5)*10 + rng()*5);
+  ctx.fillStyle = `rgb(${br},${bg},${bb})`;
+  ctx.fill();
+
+  if (levels <= 0) {
+    leafPts.push({ x: ex, y: ey, r: 1 });
+    return;
+  }
+
+  const n = rng() < 0.3 ? 3 : 2;
+  const spread = 0.42 + rng()*0.18;
+  for(let i=0;i<n;i++){
+    const side = n===2 ? (i===0?-1:1) : (i-1);
+    const childAngle = ang + bend + side*spread*(0.75 + rng()*0.5);
+    const childLen = length*(0.58 + rng()*0.12);
+    drawBranch(ctx, ex, ey, childAngle, childLen, w1, levels-1, rng, leafPts);
+  }
+}
+
+// ── ROOTS ─────────────────────────────────────────────────────────────────────
+function drawRoots(ctx, cx, gy, nRoots, scale, rng) {
+  const angles = [-72,-48,-24,24,50,76];
+  for(let i=0;i<nRoots;i++){
+    const a = angles[i] * Math.PI/180;
+    const len = (22 + rng()*12) * scale;
+    const w = (3 + rng()*1.5) * scale;
+    const ex = cx + Math.cos(a)*len;
+    const ey = gy + Math.abs(Math.sin(a))*len*0.5;
+    const cx1 = cx + Math.cos(a)*len*0.5 + (rng()-0.5)*10;
+    const cy1 = gy + Math.abs(Math.sin(a))*len*0.22;
+
+    const rg = ctx.createLinearGradient(cx,gy,ex,ey);
+    rg.addColorStop(0,'rgba(88,62,30,0.95)');
+    rg.addColorStop(0.6,'rgba(65,44,20,0.7)');
+    rg.addColorStop(1,'rgba(40,26,10,0)');
+    ctx.strokeStyle = rg; ctx.lineWidth = w; ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.moveTo(cx,gy); ctx.quadraticCurveTo(cx1,cy1,ex,ey); ctx.stroke();
+
+    // sub-root
+    if(scale > 0.7){
+      const sp = 0.4+rng()*0.35;
+      const sa = a + (rng()<0.5?sp:-sp);
+      const sl = len*0.4;
+      const sex = ex + Math.cos(sa)*sl;
+      const sey = ey + Math.abs(Math.sin(sa))*sl*0.4;
+      ctx.strokeStyle = `rgba(55,36,16,${0.35*scale})`; ctx.lineWidth = w*0.38;
+      ctx.beginPath(); ctx.moveTo(ex,ey); ctx.lineTo(sex,sey); ctx.stroke();
+    }
+  }
+}
+
+// ── LEAF CLUSTER ──────────────────────────────────────────────────────────────
+// Individual overlapping leaf shapes arranged in a crown blob
+function drawLeafCluster(ctx, cx, cy, radius, density, rng) {
+  const n = Math.floor(density);
+  const layers = 3;
+
+  for(let layer=0;layer<layers;layer++){
+    const layerT = layer/(layers-1); // 0=back, 1=front
+    const nInLayer = Math.floor(n/layers) + (layer===layers-1 ? n%layers : 0);
+
+    for(let i=0;i<nInLayer;i++){
+      const t = rng()*Math.PI*2;
+      // distribute in egg-shaped crown (wider in middle, tapers at top)
+      const normalizedY = Math.sin(t)*0.5 + 0.5; // 0 top, 1 bottom
+      const rx = radius * (0.55 + normalizedY*0.45); // wider at bottom
+      const ry = radius * 0.75;
+      const lx = cx + Math.cos(t)*rx*(0.2 + rng()*0.8);
+      const ly = cy + Math.sin(t)*ry*(0.2 + rng()*0.8);
+
+      const leafLen = radius * (0.32 + rng()*0.28);
+      const leafW = leafLen * (0.38 + rng()*0.25);
+      const leafAng = rng()*Math.PI*2;
+
+      // colour: varied greens — back=darker, front=lighter+yellower
+      const hue = 100 + rng()*25;
+      const sat = 42 + layerT*20 + rng()*15;
+      const lit = 14 + layerT*18 + rng()*10;
+      const alpha = 0.82 + rng()*0.15;
+
+      ctx.save();
+      ctx.translate(lx, ly);
+      ctx.rotate(leafAng);
+      ctx.beginPath();
+      // pointed ellipse = leaf shape
+      ctx.ellipse(0, 0, leafLen*0.5, leafW*0.5, 0, 0, Math.PI*2);
+      ctx.fillStyle = `hsla(${hue},${sat}%,${lit}%,${alpha})`;
+      ctx.fill();
+      // vein on front leaves
+      if(layer===layers-1 && leafLen > 7){
+        ctx.beginPath();
+        ctx.moveTo(-leafLen*0.38, 0); ctx.lineTo(leafLen*0.42, 0);
+        ctx.strokeStyle = `hsla(${hue},${sat-5}%,${lit+12}%,0.28)`;
+        ctx.lineWidth = 0.45; ctx.stroke();
+      }
+      ctx.restore();
+    }
+  }
+
+  // rim light on top of cluster
+  const rl = ctx.createRadialGradient(cx-radius*0.2, cy-radius*0.3, 0, cx, cy, radius*1.1);
+  rl.addColorStop(0, 'rgba(160,230,100,0.07)');
+  rl.addColorStop(0.5,'rgba(80,160,50,0.04)');
+  rl.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = rl;
+  ctx.beginPath(); ctx.ellipse(cx, cy, radius*1.1, radius*0.85, 0, 0, Math.PI*2); ctx.fill();
+}
+
+// ── FULL TREE DRAW ────────────────────────────────────────────────────────────
+// Explicit main branches off trunk at fixed positions → no random off-screen
+function drawFullTree(ctx, cx, gy, config, rng) {
+  const {trunkH, trunkW, lean, nBranches, branchDepth, rootCount, rootScale} = config;
+  const topY = gy - trunkH;
+  const topX = cx + lean;
+
+  // roots (behind trunk)
+  if(rootCount > 0) drawRoots(ctx, cx, gy, rootCount, rootScale, rng);
+
+  // trunk
+  drawTrunk(ctx, cx, gy, topY, trunkW, trunkW*0.28, lean, rng);
+
+  // main branches + leaf collection
+  const leafPts = [];
+  const branchDefs = getBranchDefs(nBranches);
+
+  branchDefs.forEach(def => {
+    // attach point on trunk
+    const ax = lerp(cx, topX, def.t) + (rng()-0.5)*2;
+    const ay = lerp(gy, topY, def.t);
+    const bLen = trunkH * def.lenR;
+    const bW = trunkW * def.wR;
+    const angle = def.side < 0
+      ? -Math.PI/2 + def.spreadDown + (rng()-0.5)*0.12
+      : -Math.PI/2 - def.spreadDown + (rng()-0.5)*0.12;
+    const bRng = seededRng(Math.floor(ax*7+ay*13));
+    drawBranch(ctx, ax, ay, angle, bLen, bW, branchDepth, bRng, leafPts);
+  });
+
+  // leaf clusters at all collected tip points
+  leafPts.forEach(pt => {
+    const lr = seededRng(Math.floor(pt.x*11+pt.y*17));
+    const size = trunkH * (0.20 + lr()*0.12);
+    const density = 12 + branchDepth * 4 + lr()*8;
+    drawLeafCluster(ctx, pt.x, pt.y, size, density, lr);
+  });
+}
+
+// Branch layout definitions for n main branches
+function getBranchDefs(n) {
+  const defs = [
+    { t:0.92, side:-1, lenR:0.52, wR:0.28, spreadDown:0.55 }, // left high
+    { t:0.92, side:+1, lenR:0.50, wR:0.26, spreadDown:0.58 }, // right high
+    { t:0.72, side:-1, lenR:0.46, wR:0.22, spreadDown:0.70 }, // left mid
+    { t:0.72, side:+1, lenR:0.44, wR:0.20, spreadDown:0.72 }, // right mid
+    { t:0.52, side:-1, lenR:0.38, wR:0.17, spreadDown:0.80 }, // left low
+    { t:0.52, side:+1, lenR:0.36, wR:0.15, spreadDown:0.82 }, // right low
+  ];
+  return defs.slice(0, Math.min(n, defs.length));
+}
+
+// ── Bezier helpers ─────────────────────────────────────────────────────────────
+function lerp(a,b,t){ return a+(b-a)*t; }
+function getBezierPoints(x0,y0,x1,y1,x2,y2,x3,y3,n){
+  const pts=[];
+  for(let i=0;i<=n;i++){
+    const t=i/n, mt=1-t;
+    pts.push({
+      x: mt*mt*mt*x0 + 3*mt*mt*t*x1 + 3*mt*t*t*x2 + t*t*t*x3,
+      y: mt*mt*mt*y0 + 3*mt*mt*t*y1 + 3*mt*t*t*y2 + t*t*t*y3
+    });
+  }
+  return pts;
+}
+
+// ── EARLY STAGE DRAWS (carry over from v1) ───────────────────────────────────
+function drawSeed(ctx, cx, gy, rng) {
+  ctx.strokeStyle='rgba(50,30,8,0.7)'; ctx.lineWidth=1.2;
+  ctx.beginPath(); ctx.moveTo(cx-2,gy); ctx.lineTo(cx+1,gy+4); ctx.lineTo(cx-1,gy+8); ctx.stroke();
+  ctx.save(); ctx.translate(cx,gy+2); ctx.rotate(-0.18);
+  const sg=ctx.createRadialGradient(-2,-3,0,0,0,9);
+  sg.addColorStop(0,'#caa462'); sg.addColorStop(0.5,'#8a5820'); sg.addColorStop(1,'#4a2e0a');
+  ctx.fillStyle=sg; ctx.beginPath(); ctx.ellipse(0,0,5.5,8.5,0,0,Math.PI*2); ctx.fill();
+  ctx.strokeStyle='rgba(210,165,85,0.35)'; ctx.lineWidth=0.7;
+  ctx.beginPath(); ctx.moveTo(0,-7.5); ctx.lineTo(0,6); ctx.stroke();
+  ctx.restore();
+  const gl=ctx.createRadialGradient(cx,gy+2,0,cx,gy+2,22);
+  gl.addColorStop(0,'rgba(130,85,32,0.14)'); gl.addColorStop(1,'rgba(0,0,0,0)');
+  ctx.fillStyle=gl; ctx.beginPath(); ctx.ellipse(cx,gy+2,22,15,0,0,Math.PI*2); ctx.fill();
+}
+
+function drawCrack(ctx, cx, gy, rng) {
+  ctx.strokeStyle='rgba(38,22,6,0.8)'; ctx.lineWidth=1;
+  [[-4,3],[3,-2]].forEach(([ox,oy])=>{
+    ctx.beginPath(); ctx.moveTo(cx+ox,gy); ctx.lineTo(cx+ox*1.5,gy+4); ctx.stroke();
+  });
+  // hypocotyl
+  const h=18;
+  const sg=ctx.createLinearGradient(cx,gy,cx+1.5,gy-h);
+  sg.addColorStop(0,'rgb(80,110,42)'); sg.addColorStop(1,'rgb(115,158,55)');
+  ctx.fillStyle=sg;
+  ctx.beginPath();
+  const hw=2.2;
+  ctx.moveTo(cx-hw,gy); ctx.lineTo(cx-hw*0.5,gy-h); ctx.lineTo(cx+hw*0.5+1.5,gy-h); ctx.lineTo(cx+hw,gy);
+  ctx.closePath(); ctx.fill();
+  // cotyledons
+  [[-1,0.45],[1,-0.45]].forEach(([side,rot])=>{
+    ctx.save(); ctx.translate(cx+1.5,gy-h+2); ctx.rotate(rot*side);
+    ctx.beginPath(); ctx.ellipse(side*9,-3,8.5,5.5,-0.28*side,0,Math.PI*2);
+    const lg=ctx.createRadialGradient(side*7,-4,0,side*9,-3,10);
+    lg.addColorStop(0,'rgba(155,208,80,0.97)'); lg.addColorStop(0.6,'rgba(100,158,48,0.92)'); lg.addColorStop(1,'rgba(68,112,32,0.86)');
+    ctx.fillStyle=lg; ctx.fill(); ctx.restore();
+  });
+}
+
+function drawSprout(ctx, cx, gy, rng) {
+  const h=40;
+  const sg=ctx.createLinearGradient(cx,gy,cx+2,gy-h);
+  sg.addColorStop(0,'rgb(78,112,38)'); sg.addColorStop(1,'rgb(118,162,52)');
+  ctx.fillStyle=sg;
+  const hw=3.2;
+  ctx.beginPath();
+  ctx.moveTo(cx-hw,gy); ctx.bezierCurveTo(cx-hw,gy-h*0.5,cx+2-hw*0.3,gy-h*0.8,cx+2-hw*0.4,gy-h);
+  ctx.lineTo(cx+2+hw*0.4,gy-h); ctx.bezierCurveTo(cx+2+hw*0.3,gy-h*0.8,cx+hw,gy-h*0.5,cx+hw,gy);
+  ctx.closePath(); ctx.fill();
+  // first true leaves
+  [[-1,1],[1,-1]].forEach(([side,tilt])=>{
+    const lx=cx+side*1.5, ly=gy-h*0.52;
+    ctx.save(); ctx.translate(lx,ly); ctx.rotate(tilt*0.55);
+    ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(side*7,-3); ctx.strokeStyle='rgba(88,128,38,0.75)'; ctx.lineWidth=0.9; ctx.stroke();
+    ctx.beginPath(); ctx.ellipse(side*12,-6,11,6.5,-tilt*0.38,0,Math.PI*2);
+    const lg=ctx.createRadialGradient(side*10,-7,0,side*12,-6,12);
+    lg.addColorStop(0,'rgba(165,215,82,0.97)'); lg.addColorStop(0.65,'rgba(102,158,46,0.93)'); lg.addColorStop(1,'rgba(68,112,30,0.86)');
+    ctx.fillStyle=lg; ctx.fill();
+    ctx.beginPath(); ctx.moveTo(side*2,-3); ctx.lineTo(side*22,-9); ctx.strokeStyle='rgba(185,235,105,0.3)'; ctx.lineWidth=0.5; ctx.stroke();
+    ctx.restore();
+  });
+  // top bud
+  [[-0.38,0],[0,-0.05],[0.38,0.03]].forEach(([ox,oy],i)=>{
+    ctx.save(); ctx.translate(cx+2+ox*13,gy-h-1+oy*9); ctx.rotate(ox*1.05);
+    ctx.beginPath(); ctx.ellipse(0,0,7.5+i*1.8,4.5+i,0,0,Math.PI*2);
+    ctx.fillStyle=`rgba(${138+i*12},${198+i*6},68,${0.92-i*0.04})`; ctx.fill(); ctx.restore();
+  });
+}
+
+// ── STAGE CONFIGS ─────────────────────────────────────────────────────────────
+const W=200, H=260;
+
+const stages = [
+  {
+    label:'种子', days:'第 0 天', W, H,
+    draw(ctx,rng){ drawGround(ctx,W/2,H*0.70,W); drawSeed(ctx,W/2,H*0.70,rng); }
+  },
+  {
+    label:'破土', days:'第 1 天', W, H,
+    draw(ctx,rng){ drawGround(ctx,W/2,H*0.70,W); drawCrack(ctx,W/2,H*0.70,rng); }
+  },
+  {
+    label:'嫩芽', days:'第 2–7 天', W, H,
+    draw(ctx,rng){ drawGround(ctx,W/2,H*0.70,W); drawSprout(ctx,W/2,H*0.70,rng); }
+  },
+  {
+    label:'幼苗', days:'第 8–30 天', W, H,
+    draw(ctx,rng){
+      const gy=H*0.78;
+      drawGround(ctx,W/2,gy,W);
+      drawFullTree(ctx,W/2,gy,{
+        trunkH:75, trunkW:10, lean:5, nBranches:2, branchDepth:2, rootCount:0, rootScale:0.6
+      }, rng);
+    }
+  },
+  {
+    label:'少年树', days:'第 31–90 天', W, H,
+    draw(ctx,rng){
+      const gy=H*0.82;
+      drawGround(ctx,W/2,gy,W);
+      drawFullTree(ctx,W/2,gy,{
+        trunkH:110, trunkW:15, lean:6, nBranches:4, branchDepth:3, rootCount:3, rootScale:0.75
+      }, rng);
+    }
+  },
+  {
+    label:'成年树', days:'第 91–300 天', W, H,
+    draw(ctx,rng){
+      const gy=H*0.85;
+      drawGround(ctx,W/2,gy,W);
+      drawFullTree(ctx,W/2,gy,{
+        trunkH:148, trunkW:21, lean:8, nBranches:6, branchDepth:4, rootCount:5, rootScale:1.0
+      }, rng);
+    }
+  },
+  {
+    label:'古树', days:'第 300+ 天', W, H,
+    draw(ctx,rng){
+      const gy=H*0.88;
+      drawGround(ctx,W/2,gy,W);
+      drawFullTree(ctx,W/2,gy,{
+        trunkH:180, trunkW:28, lean:10, nBranches:6, branchDepth:5, rootCount:6, rootScale:1.4
+      }, rng);
+    }
+  },
+];
+
+// ── Render ─────────────────────────────────────────────────────────────────────
+const container = document.getElementById('stages');
+stages.forEach((stage, si) => {
+  const div = document.createElement('div');
+  div.className = 'stage';
+  const cv = document.createElement('canvas');
+  cv.width = stage.W; cv.height = stage.H;
+  div.appendChild(cv);
+  const ctx = cv.getContext('2d');
+  const rng = seededRng(si*137 + 91);
+  stage.draw(ctx, rng);
+  const lbl = document.createElement('div'); lbl.className='label'; lbl.textContent=stage.label;
+  const days = document.createElement('div'); days.className='days'; days.textContent=stage.days;
+  div.appendChild(lbl); div.appendChild(days);
+  container.appendChild(div);
+});
+</script>
+</body>
+</html>

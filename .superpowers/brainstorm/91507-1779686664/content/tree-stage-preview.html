@@ -1,0 +1,187 @@
+<h2>点击「树」导航 — 阶段预览面板</h2>
+<p class="subtitle">用户打开预览看到自己树的成长路径，增强打卡信心。选哪种展示形式？</p>
+
+<div class="cards">
+
+  <div class="card" data-choice="a" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div style="background:#040b06;border-radius:16px;overflow:hidden;max-width:210px;margin:0 auto;font-family:system-ui;">
+        <!-- Bottom sheet style -->
+        <div style="background:#071410;padding:14px 14px 8px;border-bottom:1px solid rgba(255,255,255,0.06);">
+          <div style="width:32px;height:3px;background:rgba(255,255,255,0.15);border-radius:2px;margin:0 auto 10px;"></div>
+          <div style="font-size:12px;color:rgba(200,240,200,0.7);font-weight:600;text-align:center;">你的树会这样生长</div>
+          <div style="font-size:10px;color:rgba(255,255,255,0.3);text-align:center;margin-top:3px;">坚持打卡，逐步解锁</div>
+        </div>
+        <!-- Horizontal scrollable stages -->
+        <div style="padding:12px 10px;display:flex;gap:8px;overflow-x:auto;">
+          <!-- Stage 1: seed -->
+          <div style="flex:0 0 52px;text-align:center;">
+            <div style="width:52px;height:65px;background:rgba(255,255,255,0.04);border-radius:8px;display:flex;align-items:center;justify-content:center;border:1px solid rgba(100,200,100,0.3);margin-bottom:4px;">
+              <span style="font-size:18px;">🌰</span>
+            </div>
+            <div style="font-size:8px;color:rgba(100,200,100,0.8);font-weight:600;">种子</div>
+            <div style="font-size:7px;color:rgba(255,255,255,0.3);">第1天</div>
+          </div>
+          <!-- Stage 2: sprout -->
+          <div style="flex:0 0 52px;text-align:center;">
+            <div style="width:52px;height:65px;background:rgba(255,255,255,0.04);border-radius:8px;display:flex;align-items:center;justify-content:center;border:1px solid rgba(255,255,255,0.08);margin-bottom:4px;">
+              <span style="font-size:18px;">🌱</span>
+            </div>
+            <div style="font-size:8px;color:rgba(255,255,255,0.5);">嫩芽</div>
+            <div style="font-size:7px;color:rgba(255,255,255,0.25);">第3天</div>
+          </div>
+          <!-- Stage 3: sapling -->
+          <div style="flex:0 0 52px;text-align:center;">
+            <div style="width:52px;height:65px;background:rgba(255,255,255,0.04);border-radius:8px;display:flex;align-items:center;justify-content:center;border:1px solid rgba(255,255,255,0.08);margin-bottom:4px;">
+              <span style="font-size:18px;">🪴</span>
+            </div>
+            <div style="font-size:8px;color:rgba(255,255,255,0.5);">幼苗</div>
+            <div style="font-size:7px;color:rgba(255,255,255,0.25);">第7天</div>
+          </div>
+          <!-- Stage 4: young (current - highlighted) -->
+          <div style="flex:0 0 52px;text-align:center;">
+            <div style="width:52px;height:65px;background:rgba(74,140,92,0.15);border-radius:8px;display:flex;align-items:center;justify-content:center;border:1.5px solid rgba(74,140,92,0.6);margin-bottom:4px;position:relative;">
+              <span style="font-size:18px;">🌿</span>
+              <div style="position:absolute;top:-6px;left:50%;transform:translateX(-50%);background:#4a8c5c;color:#fff;font-size:7px;padding:1px 5px;border-radius:6px;white-space:nowrap;">现在</div>
+            </div>
+            <div style="font-size:8px;color:#6dc88a;font-weight:600;">青树</div>
+            <div style="font-size:7px;color:rgba(255,255,255,0.25);">第30天</div>
+          </div>
+          <!-- Stage 5: mature (locked) -->
+          <div style="flex:0 0 52px;text-align:center;opacity:0.4;">
+            <div style="width:52px;height:65px;background:rgba(255,255,255,0.03);border-radius:8px;display:flex;align-items:center;justify-content:center;border:1px solid rgba(255,255,255,0.06);margin-bottom:4px;">
+              <span style="font-size:14px;">🔒</span>
+            </div>
+            <div style="font-size:8px;color:rgba(255,255,255,0.4);">壮年树</div>
+            <div style="font-size:7px;color:rgba(255,255,255,0.2);">第90天</div>
+          </div>
+          <!-- Stage 6: ancient (locked) -->
+          <div style="flex:0 0 52px;text-align:center;opacity:0.3;">
+            <div style="width:52px;height:65px;background:rgba(255,255,255,0.03);border-radius:8px;display:flex;align-items:center;justify-content:center;border:1px solid rgba(255,255,255,0.06);margin-bottom:4px;">
+              <span style="font-size:14px;">🔒</span>
+            </div>
+            <div style="font-size:8px;color:rgba(255,255,255,0.35);">古树</div>
+            <div style="font-size:7px;color:rgba(255,255,255,0.2);">第300天</div>
+          </div>
+        </div>
+        <!-- Progress bar -->
+        <div style="padding:0 14px 12px;">
+          <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
+            <span style="font-size:9px;color:rgba(255,255,255,0.3);">距下一阶段</span>
+            <span style="font-size:9px;color:#6dc88a;">还差 12 天</span>
+          </div>
+          <div style="height:3px;background:rgba(255,255,255,0.08);border-radius:2px;overflow:hidden;">
+            <div style="height:100%;width:62%;background:linear-gradient(90deg,#4a8c5c,#6dc88a);border-radius:2px;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>A. 横向滚动阶段卡片</h3>
+      <p>底部弹出 sheet，横向滑动看所有阶段，当前阶段高亮，未解锁显示锁。进度条显示距下一阶段多远。</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="b" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div style="background:#040b06;border-radius:16px;overflow:hidden;max-width:210px;margin:0 auto;font-family:system-ui;">
+        <div style="background:#071410;padding:12px 14px 10px;border-bottom:1px solid rgba(255,255,255,0.06);">
+          <div style="width:32px;height:3px;background:rgba(255,255,255,0.15);border-radius:2px;margin:0 auto 10px;"></div>
+          <div style="font-size:12px;color:rgba(200,240,200,0.7);font-weight:600;text-align:center;">成长阶段</div>
+        </div>
+        <!-- Vertical timeline list -->
+        <div style="padding:10px 14px;max-height:200px;overflow-y:auto;">
+          <!-- Each stage as a row -->
+          <div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid rgba(255,255,255,0.05);">
+            <div style="width:36px;height:44px;background:rgba(255,255,255,0.04);border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0;border:1px solid rgba(100,200,100,0.3);font-size:14px;">🌰</div>
+            <div>
+              <div style="font-size:11px;color:rgba(200,240,200,0.8);font-weight:600;">种子</div>
+              <div style="font-size:9px;color:rgba(255,255,255,0.3);">第 1 天 · 已解锁</div>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid rgba(255,255,255,0.05);">
+            <div style="width:36px;height:44px;background:rgba(255,255,255,0.04);border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:14px;">🌱</div>
+            <div>
+              <div style="font-size:11px;color:rgba(255,255,255,0.6);">嫩芽</div>
+              <div style="font-size:9px;color:rgba(255,255,255,0.3);">第 3 天 · 已解锁</div>
+            </div>
+          </div>
+          <!-- Current - highlighted row -->
+          <div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid rgba(255,255,255,0.05);background:rgba(74,140,92,0.08);margin:0 -14px;padding-left:14px;padding-right:14px;">
+            <div style="width:36px;height:44px;background:rgba(74,140,92,0.15);border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0;border:1.5px solid rgba(74,140,92,0.5);font-size:14px;">🌿</div>
+            <div>
+              <div style="font-size:11px;color:#6dc88a;font-weight:700;">青树 ← 你在这里</div>
+              <div style="font-size:9px;color:rgba(109,200,138,0.5);">第 18 天</div>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid rgba(255,255,255,0.05);opacity:0.35;">
+            <div style="width:36px;height:44px;background:rgba(255,255,255,0.03);border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0;border:1px solid rgba(255,255,255,0.06);font-size:12px;">🔒</div>
+            <div>
+              <div style="font-size:11px;color:rgba(255,255,255,0.4);">壮年树</div>
+              <div style="font-size:9px;color:rgba(255,255,255,0.2);">第 30 天解锁</div>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;padding:7px 0;opacity:0.25;">
+            <div style="width:36px;height:44px;background:rgba(255,255,255,0.03);border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0;border:1px solid rgba(255,255,255,0.05);font-size:12px;">🔒</div>
+            <div>
+              <div style="font-size:11px;color:rgba(255,255,255,0.35);">古树</div>
+              <div style="font-size:9px;color:rgba(255,255,255,0.18);">第 90 天解锁</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>B. 竖向列表 + 当前高亮</h3>
+      <p>类似成就系统，每行一个阶段，当前位置高亮显示「你在这里」，下方阶段锁定渐淡。</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="c" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div style="background:#040b06;border-radius:16px;overflow:hidden;max-width:210px;margin:0 auto;font-family:system-ui;">
+        <div style="background:#071410;padding:12px 14px 10px;border-bottom:1px solid rgba(255,255,255,0.06);">
+          <div style="width:32px;height:3px;background:rgba(255,255,255,0.15);border-radius:2px;margin:0 auto 10px;"></div>
+          <div style="font-size:12px;color:rgba(200,240,200,0.7);font-weight:600;text-align:center;">树的一生</div>
+        </div>
+        <!-- Large current stage + next stage teaser -->
+        <div style="padding:12px 14px 8px;">
+          <div style="font-size:9px;color:rgba(255,255,255,0.3);letter-spacing:.08em;margin-bottom:8px;">当前阶段</div>
+          <div style="display:flex;gap:10px;align-items:center;margin-bottom:14px;">
+            <div style="width:64px;height:80px;background:rgba(74,140,92,0.12);border-radius:10px;display:flex;align-items:center;justify-content:center;border:1.5px solid rgba(74,140,92,0.4);font-size:28px;flex-shrink:0;">🌿</div>
+            <div>
+              <div style="font-size:14px;color:#6dc88a;font-weight:700;margin-bottom:3px;">青树</div>
+              <div style="font-size:10px;color:rgba(255,255,255,0.35);line-height:1.5;">枝条开始分叉，<br>树冠逐渐成型。</div>
+            </div>
+          </div>
+          <!-- Next stage -->
+          <div style="background:rgba(255,255,255,0.03);border-radius:8px;padding:9px 10px;display:flex;align-items:center;gap:8px;">
+            <div style="font-size:18px;opacity:0.5;">🌳</div>
+            <div>
+              <div style="font-size:10px;color:rgba(255,255,255,0.4);">再 12 天 →</div>
+              <div style="font-size:11px;color:rgba(255,255,255,0.5);font-weight:600;">壮年树</div>
+            </div>
+          </div>
+          <!-- Mini row of all stages -->
+          <div style="display:flex;justify-content:space-between;margin-top:12px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.05);">
+            <span style="font-size:14px;opacity:0.7;">🌰</span>
+            <span style="font-size:14px;opacity:0.7;">🌱</span>
+            <span style="font-size:14px;opacity:0.7;">🪴</span>
+            <span style="font-size:16px;">🌿</span>
+            <span style="font-size:14px;opacity:0.3;">🌳</span>
+            <span style="font-size:14px;opacity:0.2;">🌲</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>C. 当前阶段大图 + 下一阶段预告</h3>
+      <p>聚焦当前，大图展示现阶段描述，底部「再X天→下一阶段」激励感强，底部缩略行显示全路径。</p>
+    </div>
+  </div>
+
+</div>
+
+<div style="margin-top:16px;padding:12px;background:rgba(100,200,130,0.07);border:1px solid rgba(100,200,130,0.15);border-radius:10px;font-size:12px;color:rgba(160,230,180,0.7);line-height:1.6;">
+  ⚠️ 注意：emoji 是占位符，实际实现会用 tree.js 的 <code>drawTree(canvas, dayCount)</code> 渲染真实树形。
+</div>

@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>树成长阶段 — 实际渲染</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    font-family: 'Outfit', system-ui, sans-serif;
+    background: #0A0A0B;
+    color: #e8e8ec;
+    min-height: 100vh;
+    padding: 2rem 1rem 3rem;
+  }
+  h1 { text-align:center; font-size:1.35rem; font-weight:600; letter-spacing:-0.02em; margin-bottom:0.4rem; }
+  .subtitle { text-align:center; color:rgba(232,232,236,0.4); font-size:0.85rem; margin-bottom:2rem; }
+
+  .stages-row {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: center;
+    flex-wrap: wrap;
+    max-width: 980px;
+    margin: 0 auto 2rem;
+  }
+
+  .stage-card {
+    background: #111113;
+    border: 2px solid rgba(255,255,255,0.06);
+    border-radius: 16px;
+    padding: 1rem 1rem 0.75rem;
+    width: 170px;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s, transform 0.15s;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .stage-card:hover { border-color: rgba(74,124,89,0.4); transform: translateY(-2px); }
+  .stage-card.selected { border-color: #4A7C59; background: rgba(74,124,89,0.07); }
+
+  canvas {
+    display: block;
+    border-radius: 10px;
+    background: #000;
+  }
+
+  .stage-name {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: #4A7C59;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-top: 0.65rem;
+  }
+  .stage-days {
+    font-size: 0.6rem;
+    color: rgba(232,232,236,0.3);
+    font-family: monospace;
+    margin-top: 2px;
+    margin-bottom: 0.3rem;
+  }
+  .stage-desc {
+    font-size: 0.68rem;
+    color: rgba(232,232,236,0.45);
+    text-align: center;
+    line-height: 1.5;
+  }
+
+  .note {
+    max-width: 600px;
+    margin: 0 auto 1.5rem;
+    background: rgba(196,167,125,0.06);
+    border: 1px solid rgba(196,167,125,0.18);
+    border-radius: 12px;
+    padding: 0.85rem 1.1rem;
+    font-size: 0.78rem;
+    color: rgba(196,167,125,0.7);
+    text-align: center;
+    line-height: 1.6;
+  }
+
+  .click-hint { text-align:center; font-size:0.72rem; color:rgba(255,255,255,0.18); margin-top:1.5rem; }
+
+  /* 标注：问题阶段 */
+  .problem-badge {
+    font-size: 0.58rem;
+    background: rgba(255,80,80,0.12);
+    border: 1px solid rgba(255,80,80,0.25);
+    color: rgba(255,120,120,0.8);
+    border-radius: 6px;
+    padding: 1px 6px;
+    margin-top: 3px;
+  }
+  .new-badge {
+    font-size: 0.58rem;
+    background: rgba(74,124,89,0.2);
+    border: 1px solid rgba(74,124,89,0.35);
+    color: rgba(107,155,122,0.9);
+    border-radius: 6px;
+    padding: 1px 6px;
+    margin-top: 3px;
+  }
+</style>
+</head>
+<body>
+<h1>宽冠橡树 — 各阶段实际渲染</h1>
+<p class="subtitle">以现有 drawBranch 递归算法为基础，重新设计各阶段的形态节奏</p>
+
+<div class="note">
+  ⚠️ 当前问题：记录第 1 天就进入「嫩芽」，嫩芽形象与后续宽冠橡树风格脱节。<br>
+  新方案：种子 → 破土芽（tiny branch stub）→ 幼苗（depth=2）→ 小树（depth=4）→ 茂盛（depth=6）→ 参天（depth=8）
+</div>
+
+<div class="stages-row" id="stages-row"></div>
+
+<p class="click-hint">点击卡片选择你想调整的阶段 · 在终端描述你希望的样子</p>
+
+<script>
+// ─── 宽冠橡树绘制算法（与 app/tree.js 相同逻辑）───
+function makeRng(seed) {
+  let s = (seed >>> 0) || 1;
+  return () => { s = (Math.imul(1664525, s) + 1013904223) >>> 0; return s / 0xffffffff; };
+}
+
+function getPalette(vitality7=7) {
+  const v = Math.max(0, Math.min(7, vitality7)) / 7;
+  return {
+    br:  [105, 78, 48],
+    lf:  [Math.round(108-(1-v)*28), Math.round(195-(1-v)*55), Math.round(90-(1-v)*20)],
+    rim: [150, 230, 130],
+    dot: [210, 255, 190],
+    amb: [60, 170, 60],
+    spread: 0.55,
+    leanL: 1.15,
+    leanR: 1.0,
+  };
+}
+
+function drawBranch(ctx, rng, x, y, angle, len, width, depth, maxDepth, pal, leafScale=1) {
+  if (depth === 0 || len < 1.5) return;
+  const ex = x + Math.cos(angle) * len;
+  const ey = y - Math.sin(angle) * len;
+  const t = depth / maxDepth;
+  ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(ex, ey);
+  ctx.lineWidth = width; ctx.lineCap = 'round';
+  ctx.strokeStyle = `rgba(${pal.br[0]},${pal.br[1]},${pal.br[2]},${0.55 + t*0.35})`;
+  ctx.stroke();
+
+  if (depth <= 2) {
+    const r = (14 + rng()*10) * leafScale;
+    const grd = ctx.createRadialGradient(ex,ey,0,ex,ey,r);
+    grd.addColorStop(0,    `rgba(${pal.lf[0]},${pal.lf[1]},${pal.lf[2]},0.45)`);
+    grd.addColorStop(0.55, `rgba(${pal.lf[0]},${pal.lf[1]},${pal.lf[2]},0.18)`);
+    grd.addColorStop(1,    'rgba(0,0,0,0)');
+    ctx.beginPath();
+    for (let i=0;i<=7;i++) {
+      const a=(i/7)*Math.PI*2;
+      const j=r*(0.6+rng()*0.7);
+      const px=ex+Math.cos(a)*j, py=ey+Math.sin(a)*j;
+      i===0?ctx.moveTo(px,py):ctx.lineTo(px,py);
+    }
+    ctx.closePath(); ctx.fillStyle=grd; ctx.fill();
+    ctx.strokeStyle=`rgba(${pal.rim[0]},${pal.rim[1]},${pal.rim[2]},0.22)`;
+    ctx.lineWidth=0.8; ctx.stroke();
+    if (rng()>0.48) {
+      ctx.beginPath();
+      ctx.arc(ex+(rng()-0.5)*5,ey+(rng()-0.5)*5,1.5+rng()*2,0,Math.PI*2);
+      ctx.fillStyle=`rgba(${pal.dot[0]},${pal.dot[1]},${pal.dot[2]},0.68)`;
+      ctx.fill();
+    }
+    return;
+  }
+  const sp=pal.spread, sv=sp*0.28;
+  const splits=rng()>0.65?3:2;
+  if (splits===2) {
+    drawBranch(ctx,rng,ex,ey,angle+(sp+rng()*sv)*pal.leanL,len*(0.62+rng()*0.1),width*0.65,depth-1,maxDepth,pal,leafScale);
+    drawBranch(ctx,rng,ex,ey,angle-(sp+rng()*sv)*pal.leanR,len*(0.62+rng()*0.1),width*0.65,depth-1,maxDepth,pal,leafScale);
+  } else {
+    drawBranch(ctx,rng,ex,ey,angle+sp*0.88,len*0.6, width*0.6, depth-1,maxDepth,pal,leafScale);
+    drawBranch(ctx,rng,ex,ey,angle,         len*0.64,width*0.6, depth-1,maxDepth,pal,leafScale);
+    drawBranch(ctx,rng,ex,ey,angle-sp*0.88, len*0.6, width*0.6,depth-1,maxDepth,pal,leafScale);
+  }
+}
+
+function drawAmbient(ctx, W, H, pal, radius=60, alpha=0.08) {
+  const cx=W/2, cy=H*0.42;
+  const grd=ctx.createRadialGradient(cx,cy,0,cx,cy,radius);
+  grd.addColorStop(0,`rgba(${pal.amb[0]},${pal.amb[1]},${pal.amb[2]},${alpha})`);
+  grd.addColorStop(1,'rgba(0,0,0,0)');
+  ctx.fillStyle=grd; ctx.fillRect(cx-radius,cy-radius,radius*2,radius*2);
+}
+
+function drawRoot(ctx, bx, by, pal, sc) {
+  [[Math.PI*1.22,0.16,3],[Math.PI*1.78,0.16,3],[Math.PI*1.5,0.10,2]].forEach(([a,sp,n])=>{
+    for(let i=0;i<n;i++){
+      const ang=a+(i-(n-1)/2)*sp;
+      const len=(22+i*10)*sc;
+      const ex=bx+Math.cos(ang)*len, ey=by-Math.sin(ang)*len;
+      ctx.beginPath(); ctx.moveTo(bx,by);
+      ctx.quadraticCurveTo(bx+Math.cos(ang+0.2)*len*0.5,by-Math.sin(ang+0.2)*len*0.5,ex,ey);
+      ctx.lineWidth=(3-i*0.6)*sc;
+      ctx.strokeStyle=`rgba(${pal.br[0]},${pal.br[1]},${pal.br[2]},${0.42-i*0.07})`;
+      ctx.lineCap='round'; ctx.stroke();
+    }
+  });
+}
+
+// ─── Stage definitions ───
+const stages = [
+  {
+    id: 'seed',
+    name: '种子',
+    days: '0 天',
+    desc: '破土前，地面一粒发光种子，带微弱绿晕',
+    badge: null,
+    draw(ctx, W, H, pal) {
+      const cx=W/2, cy=H*0.60;
+      // soil
+      const gGrd=ctx.createLinearGradient(cx-50,cy+20,cx+50,cy+20);
+      gGrd.addColorStop(0,'rgba(0,0,0,0)');
+      gGrd.addColorStop(0.3,`rgba(${pal.br[0]},${pal.br[1]},${pal.br[2]},0.28)`);
+      gGrd.addColorStop(0.7,`rgba(${pal.br[0]},${pal.br[1]},${pal.br[2]},0.28)`);
+      gGrd.addColorStop(1,'rgba(0,0,0,0)');
+      ctx.fillStyle=gGrd; ctx.fillRect(cx-50,cy+20,100,4);
+      // outer glow
+      const og=ctx.createRadialGradient(cx,cy,0,cx,cy,50);
+      og.addColorStop(0,`rgba(${pal.lf[0]},${pal.lf[1]},${pal.lf[2]},0.10)`);
+      og.addColorStop(1,'rgba(0,0,0,0)');
+      ctx.fillStyle=og; ctx.fillRect(cx-50,cy-50,100,100);
+      // halo
+      const h=ctx.createRadialGradient(cx,cy,3,cx,cy,28);
+      h.addColorStop(0,`rgba(${pal.lf[0]},${pal.lf[1]},${pal.lf[2]},0.50)`);
+      h.addColorStop(0.5,`rgba(${pal.lf[0]},${pal.lf[1]},${pal.lf[2]},0.14)`);
+      h.addColorStop(1,'rgba(0,0,0,0)');
+      ctx.beginPath(); ctx.arc(cx,cy,28,0,Math.PI*2);
+      ctx.fillStyle=h; ctx.fill();
+      // seed body
+      ctx.beginPath(); ctx.ellipse(cx,cy,8,11,-0.15,0,Math.PI*2);
+      ctx.fillStyle=`rgba(${pal.br[0]+20},${pal.br[1]+18},${pal.br[2]+12},0.92)`;
+      ctx.fill();
+      ctx.strokeStyle=`rgba(${pal.lf[0]},${pal.lf[1]},${pal.lf[2]},0.55)`;
+      ctx.lineWidth=1.2; ctx.stroke();
+      // sparkles
+      const rng=makeRng(42);
+      for(let i=0;i<6;i++){
+        const ang=rng()*Math.PI*2, d=18+rng()*22;
+        const px=cx+Math.cos(ang)*d, py=cy+Math.sin(ang)*d;
+        ctx.beginPath(); ctx.arc(px,py,1+rng()*1.5,0,Math.PI*2);
+        ctx.fillStyle=`rgba(${pal.dot[0]},${pal.dot[1]},${pal.dot[2]},${0.3+rng()*0.4})`;
+        ctx.fill();
+      }
+    }
+  },
+  {
+    id: 'crack',
+    name: '破土',
+    days: '第 1 天',
+    desc: '种子裂开，第一根细芽从土中探出，形如宽冠橡树的雏形',
+    badge: 'new',
+    draw(ctx, W, H, pal) {
+      const cx=W/2, by=H-28;
+      // soil
+      const g=ctx.createLinearGradient(cx-50,by,cx+50,by);
+      g.addColorStop(0,'rgba(0,0,0,0)');
+      g.addColorStop(0.35,`rgba(${pal.br[0]},${pal.br[1]},${pal.br[2]},0.30)`);
+      g.addColorStop(0.65,`rgba(${pal.br[0]},${pal.br[1]},${pal.br[2]},0.30)`);
+      g.addColorStop(1,'rgba(0,0,0,0)');
+      ctx.fillStyle=g; ctx.fillRect(cx-50,by,100,4);
+      // ambient glow tiny
+      const ag=ctx.createRadialGradient(cx,by-20,0,cx,by-20,30);
+      ag.addColorStop(0,`rgba(${pal.lf[0]},${pal.lf[1]},${pal.lf[2]},0.10)`);
+      ag.addColorStop(1,'rgba(0,0,0,0)');
+      ctx.fillStyle=ag; ctx.fillRect(cx-30,by-50,60,60);
+      // stem — very short
+      const stemH = H*0.09;
+      ctx.beginPath(); ctx.moveTo(cx,by); ctx.lineTo(cx,by-stemH);
+      ctx.lineWidth=4; ctx.strokeStyle=`rgba(${pal.br[0]},${pal.br[1]},${pal.br[2]},0.9)`;
+      ctx.lineCap='round'; ctx.stroke();
+      // tiny first fork — just two stubs
+      const tipY = by - stemH;
+      ctx.beginPath(); ctx.moveTo(cx,tipY); ctx.lineTo(cx-10,tipY-8);
+      ctx.lineWidth=2; ctx.strokeStyle=`rgba(${pal.br[0]},${pal.br[1]},${pal.br[2]},0.6)`;
+      ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(cx,tipY); ctx.lineTo(cx+8,tipY-8);
+      ctx.lineWidth=1.8; ctx.strokeStyle=`rgba(${pal.br[0]},${pal.br[1]},${pal.br[2]},0.55)`;
+      ctx.stroke();
+      // tiny leaf blobs at tips
+      [[cx-10,tipY-8],[cx+8,tipY-8],[cx,tipY-4]].forEach(([lx,ly])=>{
+        const r=6;
+        const lg=ctx.createRadialGradient(lx,ly,0,lx,ly,r);
+        lg.addColorStop(0,`rgba(${pal.lf[0]},${pal.lf[1]},${pal.lf[2]},0.55)`);
+        lg.addColorStop(1,'rgba(0,0,0,0)');
+        ctx.beginPath(); ctx.arc(lx,ly,r,0,Math.PI*2);
+        ctx.fillStyle=lg; ctx.fill();
+      });
+    }
+  },
+  {
+    id: 'sprout',
+    name: '嫩芽',
+    days: '2 – 7 天',
+    desc: 'depth=2，只有主干 + 第一层分叉 + 叶片 blob，能看出宽冠树的骨架',
+    badge: 'new',
+    draw(ctx, W, H, pal) {
+      const cx=W/2, by=H-28;
+      const rng=makeRng(3);
+      const sc=0.42;
+      const trunkH=H*0.22;
+      drawAmbient(ctx,W,H,pal,45,0.07);
+      // soil
+      const g=ctx.createLinearGradient(cx-50,by,cx+50,by);
+      g.addColorStop(0,'rgba(0,0,0,0)');
+      g.addColorStop(0.35,`rgba(${pal.br[0]},${pal.br[1]},${pal.br[2]},0.28)`);
+      g.addColorStop(0.65,`rgba(${pal.br[0]},${pal.br[1]},${pal.br[2]},0.28)`);
+      g.addColorStop(1,'rgba(0,0,0,0)');
+      ctx.fillStyle=g; ctx.fillRect(cx-50,by,100,4);
+      // trunk
+      ctx.beginPath(); ctx.moveTo(cx,by); ctx.lineTo(cx,by-trunkH);
+      ctx.lineWidth=5; ctx.strokeStyle=`rgba(${pal.br[0]},${pal.br[1]},${pal.br[2]},0.88)`;
+      ctx.lineCap='round'; ctx.stroke();
+      // depth=2 branches only
+      const md=2;
+      drawBranch(ctx,rng,cx,by-trunkH,Math.PI/2+0.38,trunkH*0.52,3.5,md,md,pal,sc);
+      drawBranch(ctx,rng,cx,by-trunkH,Math.PI/2-0.38,trunkH*0.52,3.5,md,md,pal,sc);
+    }
+  },
+  {
+    id: 'sapling',
+    name: '树苗',
+    days: '8 – 30 天',
+    desc: 'depth=4，两主枝初现，叶片稀疏，能认出是宽冠橡树雏形',
+    badge: null,
+    draw(ctx, W, H, pal) {
+      const cx=W/2, by=H-28;
+      const rng=makeRng(5);
+      const sc=0.58;
+      const trunkH=H*0.33;
+      drawAmbient(ctx,W,H,pal,65,0.08);
+      const g=ctx.createLinearGradient(cx-55,by,cx+55,by);
+      g.addColorStop(0,'rgba(0,0,0,0)');
+      g.addColorStop(0.3,`rgba(${pal.br[0]},${pal.br[1]},${pal.br[2]},0.28)`);
+      g.addColorStop(0.7,`rgba(${pal.br[0]},${pal.br[1]},${pal.br[2]},0.28)`);
+      g.addColorStop(1,'rgba(0,0,0,0)');
+      ctx.fillStyle=g; ctx.fillRect(cx-55,by,110,4);
+      ctx.beginPath(); ctx.moveTo(cx,by); ctx.lineTo(cx,by-trunkH);
+      ctx.lineWidth=7; ctx.strokeStyle=`rgba(${pal.br[0]},${pal.br[1]},${pal.br[2]},0.90)`;
+      ctx.lineCap='round'; ctx.stroke();
+      const md=4;
+      drawBranch(ctx,rng,cx,by-trunkH,Math.PI/2+0.40,trunkH*0.56,4.5,md,md,pal,sc);
+      drawBranch(ctx,rng,cx,by-trunkH,Math.PI/2-0.40,trunkH*0.56,4.5,md,md,pal,sc);
+    }
+  },
+  {
+    id: 'young',
+    name: '幼树',
+    days: '31 – 90 天',
+    desc: 'depth=5，三枝丫，树冠开始丰满，根系可见',
+    badge: null,
+    draw(ctx, W, H, pal) {
+      const cx=W/2, by=H-28;
+      const rng=makeRng(7);
+      const sc=0.78;
+      const trunkH=H*0.46;
+      drawAmbient(ctx,W,H,pal,80,0.09);
+      const g=ctx.createLinearGradient(cx-60,by,cx+60,by);
+      g.addColorStop(0,'rgba(0,0,0,0)');
+      g.addColorStop(0.3,`rgba(${pal.br[0]},${pal.br[1]},${pal.br[2]},0.28)`);
+      g.addColorStop(0.7,`rgba(${pal.br[0]},${pal.br[1]},${pal.br[2]},0.28)`);
+      g.addColorStop(1,'rgba(0,0,0,0)');
+      ctx.fillStyle=g; ctx.fillRect(cx-60,by,120,4);
+      drawRoot(ctx,cx,by,pal,0.65);
+      ctx.beginPath(); ctx.moveTo(cx,by); ctx.lineTo(cx,by-trunkH);
+      ctx.lineWidth=9; ctx.strokeStyle=`rgba(${pal.br[0]},${pal.br[1]},${pal.br[2]},0.92)`;
+      ctx.lineCap='round'; ctx.stroke();
+      const md=5;
+      drawBranch(ctx,rng,cx,by-trunkH,Math.PI/2+0.42,trunkH*0.58,5.5,md,md,pal,sc);
+      drawBranch(ctx,rng,cx,by-trunkH,Math.PI/2-0.42,trunkH*0.58,5.5,md,md,pal,sc);
+      drawBranch(ctx,rng,cx,by-trunkH*0.70,Math.PI/2+0.68,trunkH*0.30,3.5,md-1,md,pal,sc);
+    }
+  },
+  {
+    id: 'mature',
+    name: '茂盛',
+    days: '91 – 300 天',
+    desc: 'depth=7，完整宽冠橡树，呼吸动画，底部柔光，两主枝展开',
+    badge: null,
+    draw(ctx, W, H, pal) {
+      const cx=W/2, by=H-28;
+      const rng=makeRng(9);
+      const trunkH=H*0.58;
+      drawAmbient(ctx,W,H,pal,100,0.10);
+      const g=ctx.createLinearGradient(cx-65,by,cx+65,by);
+      g.addColorStop(0,'rgba(0,0,0,0)');
+      g.addColorStop(0.3,`rgba(${pal.br[0]},${pal.br[1]},${pal.br[2]},0.30)`);
+      g.addColorStop(0.7,`rgba(${pal.br[0]},${pal.br[1]},${pal.br[2]},0.30)`);
+      g.addColorStop(1,'rgba(0,0,0,0)');
+      ctx.fillStyle=g; ctx.fillRect(cx-65,by,130,4);
+      drawRoot(ctx,cx,by,pal,1.0);
+      ctx.beginPath(); ctx.moveTo(cx,by); ctx.lineTo(cx,by-trunkH);
+      ctx.lineWidth=13; ctx.strokeStyle=`rgba(${pal.br[0]},${pal.br[1]},${pal.br[2]},0.93)`;
+      ctx.lineCap='round'; ctx.stroke();
+      const md=7;
+      drawBranch(ctx,rng,cx,by-trunkH,Math.PI/2+0.44,trunkH*0.60,8,md,md,pal,1.0);
+      drawBranch(ctx,rng,cx,by-trunkH,Math.PI/2-0.44,trunkH*0.60,8,md,md,pal,1.0);
+      drawBranch(ctx,rng,cx,by-trunkH*0.72,Math.PI/2+0.70,trunkH*0.32,5,md-2,md,pal,1.0);
+      drawBranch(ctx,rng,cx,by-trunkH*0.55,Math.PI/2-0.72,trunkH*0.26,4,md-3,md,pal,1.0);
+    }
+  },
+  {
+    id: 'ancient',
+    name: '参天',
+    days: '301 天+',
+    desc: 'depth=8，树冠超出画布，根系粗壮，四主枝，发光晕最强',
+    badge: null,
+    draw(ctx, W, H, pal) {
+      const cx=W/2, by=H-28;
+      const rng=makeRng(11);
+      const trunkH=H*0.68;
+      drawAmbient(ctx,W,H,pal,120,0.12);
+      const g=ctx.createLinearGradient(cx-70,by,cx+70,by);
+      g.addColorStop(0,'rgba(0,0,0,0)');
+      g.addColorStop(0.3,`rgba(${pal.br[0]},${pal.br[1]},${pal.br[2]},0.32)`);
+      g.addColorStop(0.7,`rgba(${pal.br[0]},${pal.br[1]},${pal.br[2]},0.32)`);
+      g.addColorStop(1,'rgba(0,0,0,0)');
+      ctx.fillStyle=g; ctx.fillRect(cx-70,by,140,4);
+      drawRoot(ctx,cx,by,pal,1.3);
+      ctx.beginPath(); ctx.moveTo(cx,by); ctx.lineTo(cx,by-trunkH);
+      ctx.lineWidth=16; ctx.strokeStyle=`rgba(${pal.br[0]},${pal.br[1]},${pal.br[2]},0.95)`;
+      ctx.lineCap='round'; ctx.stroke();
+      const md=8;
+      drawBranch(ctx,rng,cx,by-trunkH,Math.PI/2+0.46,trunkH*0.62,10,md,md,pal,1.1);
+      drawBranch(ctx,rng,cx,by-trunkH,Math.PI/2-0.46,trunkH*0.62,10,md,md,pal,1.1);
+      drawBranch(ctx,rng,cx,by-trunkH*0.70,Math.PI/2+0.72,trunkH*0.34,6,md-2,md,pal,1.1);
+      drawBranch(ctx,rng,cx,by-trunkH*0.52,Math.PI/2-0.74,trunkH*0.28,5,md-3,md,pal,1.1);
+    }
+  }
+];
+
+// ─── Render all stages ───
+const row = document.getElementById('stages-row');
+const pal = getPalette(6);
+const W=150, H=220;
+
+stages.forEach(stage => {
+  const card = document.createElement('div');
+  card.className = 'stage-card';
+  card.onclick = () => {
+    card.classList.toggle('selected');
+    try { fetch('/event',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({type:'click',choice:stage.id,text:stage.name})}); } catch(e){}
+  };
+
+  const canvas = document.createElement('canvas');
+  canvas.width = W * window.devicePixelRatio;
+  canvas.height = H * window.devicePixelRatio;
+  canvas.style.width = W+'px';
+  canvas.style.height = H+'px';
+  const ctx = canvas.getContext('2d');
+  ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+  ctx.clearRect(0,0,W,H);
+  stage.draw(ctx, W, H, pal);
+
+  const badgeHtml = stage.badge === 'new'
+    ? '<div class="new-badge">新增阶段</div>'
+    : stage.badge === 'problem'
+    ? '<div class="problem-badge">当前问题</div>'
+    : '';
+
+  card.innerHTML = `
+    <div class="stage-name">${stage.name}</div>
+    <div class="stage-days">${stage.days}</div>
+    ${badgeHtml}
+  `;
+  card.insertBefore(canvas, card.firstChild);
+  card.innerHTML += `<div class="stage-desc" style="margin-top:6px">${stage.desc}</div>`;
+
+  // Re-insert canvas (innerHTML wiped it)
+  card.innerHTML = '';
+  card.appendChild(canvas);
+  card.innerHTML += `
+    <div class="stage-name">${stage.name}</div>
+    <div class="stage-days">${stage.days}</div>
+    ${badgeHtml}
+    <div class="stage-desc" style="margin-top:6px">${stage.desc}</div>
+  `;
+
+  row.appendChild(card);
+});
+</script>
+</body>
+</html>

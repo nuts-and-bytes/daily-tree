@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>底部导航设计方案</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Outfit', system-ui, sans-serif;
+    background: #0f0f10;
+    color: #e8e8ec;
+    min-height: 100vh;
+    padding: 2rem 1rem 3rem;
+  }
+  h1 {
+    text-align: center;
+    font-size: 1.4rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    letter-spacing: -0.02em;
+  }
+  .subtitle {
+    text-align: center;
+    color: rgba(232,232,236,0.45);
+    font-size: 0.875rem;
+    margin-bottom: 2.5rem;
+  }
+
+  .options-grid {
+    display: flex;
+    gap: 1.5rem;
+    justify-content: center;
+    flex-wrap: wrap;
+    max-width: 900px;
+    margin: 0 auto;
+  }
+
+  .option-card {
+    background: #111113;
+    border: 2px solid rgba(255,255,255,0.07);
+    border-radius: 20px;
+    padding: 1.5rem;
+    width: 260px;
+    cursor: pointer;
+    transition: border-color 0.2s, transform 0.15s;
+    position: relative;
+  }
+  .option-card:hover {
+    border-color: rgba(74,124,89,0.5);
+    transform: translateY(-2px);
+  }
+  .option-card.selected {
+    border-color: #4A7C59;
+    background: rgba(74,124,89,0.08);
+  }
+  .option-card.selected::after {
+    content: '✓ 选中';
+    position: absolute;
+    top: 12px; right: 14px;
+    background: #4A7C59;
+    color: #fff;
+    font-size: 0.7rem;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 20px;
+  }
+
+  .option-label {
+    font-size: 0.65rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #4A7C59;
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+  }
+  .option-title {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    letter-spacing: -0.01em;
+  }
+  .option-desc {
+    font-size: 0.8rem;
+    color: rgba(232,232,236,0.5);
+    line-height: 1.6;
+    margin-bottom: 1.25rem;
+  }
+
+  /* ── Phone mockup ── */
+  .phone {
+    width: 200px;
+    height: 300px;
+    background: #0A0A0B;
+    border-radius: 24px;
+    border: 1.5px solid rgba(255,255,255,0.1);
+    overflow: hidden;
+    position: relative;
+    margin: 0 auto;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+  }
+
+  /* tree area */
+  .phone-tree-area {
+    height: 200px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+  }
+
+  /* ─── Option A: 日历 + FAB + 我的 ─── */
+  .phone-a .bottom-bar {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 70px;
+    background: rgba(10,10,11,0.95);
+    border-top: 1px solid rgba(255,255,255,0.06);
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    padding: 0 8px 8px;
+    backdrop-filter: blur(10px);
+  }
+  .bar-icon-a {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    color: rgba(255,255,255,0.4);
+    font-size: 0.45rem;
+    flex: 1;
+  }
+  .bar-icon-a svg { width: 18px; height: 18px; }
+  .bar-icon-a.active { color: rgba(255,255,255,0.85); }
+
+  .fab-center {
+    width: 46px; height: 46px;
+    border-radius: 50%;
+    background: #4A7C59;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    box-shadow: 0 4px 16px rgba(74,124,89,0.5);
+  }
+  .fab-center svg { width: 20px; height: 20px; color: #fff; }
+
+  /* ─── Option B: 时间轴抽屉 ─── */
+  .phone-b .bottom-bar {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 70px;
+    background: rgba(10,10,11,0.95);
+    border-top: 1px solid rgba(255,255,255,0.06);
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    padding: 0 8px 8px;
+  }
+  .timeline-strip {
+    position: absolute;
+    bottom: 70px; left: 0; right: 0;
+    height: 44px;
+    background: rgba(17,17,19,0.98);
+    border-top: 1px solid rgba(255,255,255,0.06);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0 12px;
+    overflow: hidden;
+  }
+  .tl-day {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    min-width: 24px;
+    opacity: 0.45;
+    font-size: 0.38rem;
+  }
+  .tl-day.has-entry { opacity: 1; }
+  .tl-day.today { opacity: 1; }
+  .tl-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.2);
+  }
+  .tl-day.has-entry .tl-dot { background: #4A7C59; }
+  .tl-day.today .tl-dot { background: #fff; width: 8px; height: 8px; }
+
+  /* ─── Option C: 侧边抽屉 ─── */
+  .phone-c .bottom-bar {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 70px;
+    background: rgba(10,10,11,0.95);
+    border-top: 1px solid rgba(255,255,255,0.06);
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    padding: 0 8px 8px;
+  }
+  .side-drawer {
+    position: absolute;
+    top: 0; left: 0;
+    width: 64px; height: calc(100% - 70px);
+    background: rgba(17,17,19,0.98);
+    border-right: 1px solid rgba(255,255,255,0.06);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 12px 0;
+    gap: 8px;
+  }
+  .side-year {
+    font-size: 0.38rem;
+    font-weight: 700;
+    color: rgba(255,255,255,0.4);
+    writing-mode: horizontal-tb;
+    padding: 4px 6px;
+    border-radius: 6px;
+    width: 44px;
+    text-align: center;
+  }
+  .side-year.active {
+    background: rgba(74,124,89,0.2);
+    color: #4A7C59;
+    border: 1px solid rgba(74,124,89,0.3);
+  }
+
+  /* tree sketch */
+  .tree-svg { width: 80px; height: 110px; }
+  .tree-b { width: 64px; height: 90px; margin-left: 48px; }
+
+  .tag {
+    display: inline-block;
+    font-size: 0.65rem;
+    padding: 2px 8px;
+    border-radius: 20px;
+    margin: 2px;
+    font-weight: 500;
+  }
+  .tag-good { background: rgba(74,124,89,0.2); color: #6B9B7A; border: 1px solid rgba(74,124,89,0.3); }
+  .tag-warn { background: rgba(196,167,125,0.15); color: #C4A77D; border: 1px solid rgba(196,167,125,0.3); }
+
+  .click-hint {
+    text-align: center;
+    font-size: 0.75rem;
+    color: rgba(255,255,255,0.25);
+    margin-top: 2rem;
+  }
+</style>
+</head>
+<body>
+<h1>底部导航 — 三种方案</h1>
+<p class="subtitle">搜索已移除。三种替代设计，点击选择你倾向的方向</p>
+
+<div class="options-grid">
+
+  <!-- ── Option A ── -->
+  <div class="option-card" onclick="toggleSelect(this,'A')">
+    <div class="option-label">方案 A</div>
+    <div class="option-title">日历页 + 中央 FAB</div>
+    <div class="option-desc">左侧换成「日历」按钮，点击打开月历选择具体某天。右侧保留「我的」。最简洁，操作路径最短。</div>
+
+    <div class="phone phone-a">
+      <div class="phone-tree-area">
+        <svg class="tree-svg" viewBox="0 0 80 110" fill="none">
+          <!-- trunk -->
+          <line x1="40" y1="100" x2="40" y2="55" stroke="#8B7355" stroke-width="2.5" stroke-linecap="round"/>
+          <!-- branch left -->
+          <line x1="40" y1="72" x2="22" y2="54" stroke="#8B7355" stroke-width="1.8" stroke-linecap="round"/>
+          <!-- branch right -->
+          <line x1="40" y1="65" x2="56" y2="48" stroke="#8B7355" stroke-width="1.5" stroke-linecap="round"/>
+          <!-- canopy blobs -->
+          <circle cx="40" cy="42" r="22" fill="rgba(74,124,89,0.25)"/>
+          <circle cx="30" cy="38" r="16" fill="rgba(74,124,89,0.2)"/>
+          <circle cx="52" cy="40" r="14" fill="rgba(74,124,89,0.18)"/>
+          <circle cx="40" cy="30" r="12" fill="rgba(107,155,122,0.22)"/>
+          <!-- clickable dots on branches -->
+          <circle cx="22" cy="54" r="4" fill="rgba(74,124,89,0.8)" stroke="rgba(107,155,122,0.6)" stroke-width="1"/>
+          <circle cx="56" cy="48" r="4" fill="rgba(74,124,89,0.8)" stroke="rgba(107,155,122,0.6)" stroke-width="1"/>
+        </svg>
+      </div>
+      <div class="bottom-bar">
+        <div class="bar-icon-a">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          日历
+        </div>
+        <div class="fab-center">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        </div>
+        <div class="bar-icon-a">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+          我的
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-top: 12px;">
+      <span class="tag tag-good">最简洁</span>
+      <span class="tag tag-good">操作直达</span>
+      <span class="tag tag-warn">日历感觉像 todo app</span>
+    </div>
+  </div>
+
+  <!-- ── Option B ── -->
+  <div class="option-card" onclick="toggleSelect(this,'B')">
+    <div class="option-label">方案 B</div>
+    <div class="option-title">时间轴条 + 中央 FAB</div>
+    <div class="option-desc">底部导航上方常驻一条横向时间轴，显示最近 30 天，有记录的天亮绿点。左右滑动可跳月，点击某天查看。</div>
+
+    <div class="phone phone-b">
+      <div class="phone-tree-area">
+        <svg class="tree-b" viewBox="0 0 64 90" fill="none">
+          <line x1="32" y1="82" x2="32" y2="44" stroke="#8B7355" stroke-width="2.5" stroke-linecap="round"/>
+          <line x1="32" y1="58" x2="16" y2="44" stroke="#8B7355" stroke-width="1.8" stroke-linecap="round"/>
+          <line x1="32" y1="52" x2="48" y2="38" stroke="#8B7355" stroke-width="1.5" stroke-linecap="round"/>
+          <circle cx="32" cy="32" r="18" fill="rgba(74,124,89,0.25)"/>
+          <circle cx="22" cy="28" r="13" fill="rgba(74,124,89,0.2)"/>
+          <circle cx="42" cy="30" r="11" fill="rgba(74,124,89,0.18)"/>
+          <!-- clickable dots -->
+          <circle cx="16" cy="44" r="4" fill="rgba(74,124,89,0.8)" stroke="rgba(107,155,122,0.6)" stroke-width="1"/>
+          <circle cx="48" cy="38" r="4" fill="rgba(74,124,89,0.8)" stroke="rgba(107,155,122,0.6)" stroke-width="1"/>
+        </svg>
+      </div>
+      <div class="timeline-strip">
+        <div class="tl-day"><div class="tl-dot"></div><span>5/3</span></div>
+        <div class="tl-day has-entry"><div class="tl-dot"></div><span>5/4</span></div>
+        <div class="tl-day"><div class="tl-dot"></div><span>5/5</span></div>
+        <div class="tl-day has-entry"><div class="tl-dot"></div><span>5/6</span></div>
+        <div class="tl-day has-entry"><div class="tl-dot"></div><span>5/7</span></div>
+        <div class="tl-day"><div class="tl-dot"></div><span>5/8</span></div>
+        <div class="tl-day has-entry"><div class="tl-dot"></div><span>5/9</span></div>
+        <div class="tl-day today"><div class="tl-dot"></div><span>今天</span></div>
+      </div>
+      <div class="bottom-bar">
+        <div class="bar-icon-a">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+          我的
+        </div>
+        <div class="fab-center">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        </div>
+        <div class="bar-icon-a">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+          历史
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-top: 12px;">
+      <span class="tag tag-good">时间感强</span>
+      <span class="tag tag-good">一眼看空白/记录日</span>
+      <span class="tag tag-warn">会压缩树的展示高度</span>
+    </div>
+  </div>
+
+  <!-- ── Option C ── -->
+  <div class="option-card" onclick="toggleSelect(this,'C')">
+    <div class="option-label">方案 C</div>
+    <div class="option-title">左侧月份导轨 + 中央 FAB</div>
+    <div class="option-desc">左侧常驻竖向导轨，显示「年·月」，上下滑动切换。主画面保持完整。树枝本身可点。右侧只保留「我的」。</div>
+
+    <div class="phone phone-c">
+      <div class="phone-tree-area" style="padding-left: 64px;">
+        <svg class="tree-svg" viewBox="0 0 80 110" fill="none" style="width:68px;height:95px;">
+          <line x1="40" y1="100" x2="40" y2="55" stroke="#8B7355" stroke-width="2.5" stroke-linecap="round"/>
+          <line x1="40" y1="72" x2="22" y2="54" stroke="#8B7355" stroke-width="1.8" stroke-linecap="round"/>
+          <line x1="40" y1="65" x2="56" y2="48" stroke="#8B7355" stroke-width="1.5" stroke-linecap="round"/>
+          <circle cx="40" cy="42" r="22" fill="rgba(74,124,89,0.25)"/>
+          <circle cx="30" cy="38" r="16" fill="rgba(74,124,89,0.2)"/>
+          <circle cx="52" cy="40" r="14" fill="rgba(74,124,89,0.18)"/>
+          <circle cx="40" cy="30" r="12" fill="rgba(107,155,122,0.22)"/>
+          <circle cx="22" cy="54" r="4" fill="rgba(74,124,89,0.8)" stroke="rgba(107,155,122,0.6)" stroke-width="1"/>
+          <circle cx="56" cy="48" r="4" fill="rgba(74,124,89,0.8)" stroke="rgba(107,155,122,0.6)" stroke-width="1"/>
+        </svg>
+      </div>
+      <div class="side-drawer">
+        <div class="side-year" style="font-size:0.32rem;color:rgba(255,255,255,0.2)">2024·01</div>
+        <div class="side-year" style="font-size:0.32rem;color:rgba(255,255,255,0.25)">2024·06</div>
+        <div class="side-year active" style="font-size:0.32rem;">2025·05</div>
+        <div style="width:20px;height:1px;background:rgba(255,255,255,0.1);margin:2px 0;"></div>
+        <div style="font-size:0.32rem;color:rgba(255,255,255,0.2);writing-mode:horizontal-tb;padding:2px;">▼</div>
+      </div>
+      <div class="bottom-bar">
+        <div class="bar-icon-a">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+          我的
+        </div>
+        <div class="fab-center">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        </div>
+        <div style="width:46px;"></div>
+      </div>
+    </div>
+
+    <div style="margin-top: 12px;">
+      <span class="tag tag-good">不压缩树区域</span>
+      <span class="tag tag-good">符合年维度逻辑</span>
+      <span class="tag tag-warn">手机宽度本就紧</span>
+    </div>
+  </div>
+
+</div>
+
+<p class="click-hint">点击方案卡片选择 · 可多选 · 然后在终端告诉我</p>
+
+<script>
+function toggleSelect(el, label) {
+  el.classList.toggle('selected');
+  // send event
+  try {
+    fetch('/event', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({type:'click', choice: label.toLowerCase(), text: el.querySelector('.option-title').textContent})
+    });
+  } catch(e) {}
+}
+</script>
+</body>
+</html>

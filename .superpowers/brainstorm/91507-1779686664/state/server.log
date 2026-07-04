@@ -1,0 +1,9 @@
+{"type":"server-started","port":52352,"host":"127.0.0.1","url_host":"localhost","url":"http://localhost:52352","screen_dir":"/Users/ericlu/DailyTree/.superpowers/brainstorm/91507-1779686664/content","state_dir":"/Users/ericlu/DailyTree/.superpowers/brainstorm/91507-1779686664/state"}
+{"type":"screen-added","file":"/Users/ericlu/DailyTree/.superpowers/brainstorm/91507-1779686664/content/onboarding-ux.html"}
+{"source":"user-event","type":"click","text":"DAILY TREE\n        \n          你的树，从今天开始生长\n          每天记一件事，看见自己成长\n        \n        立即开始 →\n        \n          \n            💡 了解产品理念\n            ▾\n          \n        \n      \n    \n    \n      B. 大 CTA 优先 + 折叠理念区 ⭐推荐\n      打开即见「立即开始」，下方有折叠的「了解产品理念」。零阻碍进入，理念保留给主动探索的用户。","choice":"b","id":null,"timestamp":1779687121681}
+{"type":"screen-added","file":"/Users/ericlu/DailyTree/.superpowers/brainstorm/91507-1779686664/content/waiting.html"}
+{"type":"screen-added","file":"/Users/ericlu/DailyTree/.superpowers/brainstorm/91507-1779686664/content/weather-effect.html"}
+{"source":"user-event","type":"click","text":"📅\n          📊\n          +\n          🌳\n          ⚙️\n        \n        🌧 12°\n      \n    \n    \n      B. 中度毛玻璃（窗户感强）⭐推荐\n      明显 blur + 玻璃大水滴 + 滑落轨迹，像隔着一扇雨天的窗子看树。沉浸感强，树隐约可见。","choice":"b","id":null,"timestamp":1779687726638}
+{"type":"screen-added","file":"/Users/ericlu/DailyTree/.superpowers/brainstorm/91507-1779686664/content/tree-stage-preview.html"}
+{"type":"screen-added","file":"/Users/ericlu/DailyTree/.superpowers/brainstorm/91507-1779686664/content/waiting2.html"}
+{"type":"server-stopped","reason":"idle timeout"}

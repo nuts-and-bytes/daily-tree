@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>树成长阶段</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  font-family: system-ui, sans-serif;
+  background: #0A0A0B;
+  color: #e8e8ec;
+  padding: 1.5rem 1rem 3rem;
+  min-height: 100vh;
+}
+h1 { text-align:center; font-size:1.3rem; font-weight:600; margin-bottom:0.4rem; }
+.sub { text-align:center; color:rgba(232,232,236,0.4); font-size:0.82rem; margin-bottom:1.5rem; }
+.row {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  flex-wrap: wrap;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+.card {
+  background: #111113;
+  border: 2px solid rgba(255,255,255,0.07);
+  border-radius: 14px;
+  padding: 10px 10px 8px;
+  width: 132px;
+  cursor: pointer;
+  text-align: center;
+  transition: border-color .2s;
+}
+.card:hover { border-color: rgba(74,124,89,0.5); }
+.card.sel { border-color: #4A7C59; background: rgba(74,124,89,0.08); }
+canvas { display:block; border-radius:8px; }
+.nm { font-size:.68rem; font-weight:700; color:#4A7C59; text-transform:uppercase; letter-spacing:.08em; margin-top:6px; }
+.dy { font-size:.58rem; color:rgba(255,255,255,0.28); margin:2px 0 4px; }
+.ds { font-size:.63rem; color:rgba(255,255,255,0.4); line-height:1.4; }
+.badge { display:inline-block; font-size:.55rem; padding:1px 6px; border-radius:20px; margin-bottom:3px; }
+.new { background:rgba(74,124,89,.2); border:1px solid rgba(74,124,89,.4); color:#6B9B7A; }
+.hint { text-align:center; color:rgba(255,255,255,0.18); font-size:.72rem; margin-top:1.5rem; }
+</style>
+</head>
+<body>
+<h1>宽冠橡树 — 成长阶段</h1>
+<p class="sub">实际 Canvas 渲染 · 相同算法</p>
+<div class="row" id="row"></div>
+<p class="hint">点击卡片 · 在终端告诉我哪里需要调整</p>
+
+<script>
+const W = 120, H = 190;
+const DPR = Math.min(window.devicePixelRatio || 1, 2);
+
+function rng(seed) {
+  let s = (seed >>> 0) || 1;
+  return function() {
+    s = (Math.imul(1664525, s) + 1013904223) >>> 0;
+    return s / 0xffffffff;
+  };
+}
+
+const pal = {
+  br: [105, 78, 48],
+  lf: [108, 195, 90],
+  rim: [150, 230, 130],
+  dot: [210, 255, 190],
+  amb: [60, 170, 60],
+  spread: 0.55,
+  leanL: 1.15,
+  leanR: 1.0
+};
+
+function c(arr, a) { return 'rgba('+arr[0]+','+arr[1]+','+arr[2]+','+(a||1)+')'; }
+
+function branch(ctx, r, x, y, ang, len, wid, dep, maxDep, ls) {
+  if (dep <= 0 || len < 1.5) return;
+  var ex = x + Math.cos(ang)*len;
+  var ey = y - Math.sin(ang)*len;
+  ctx.beginPath(); ctx.moveTo(x,y); ctx.lineTo(ex,ey);
+  ctx.lineWidth = wid; ctx.lineCap = 'round';
+  ctx.strokeStyle = c(pal.br, 0.55 + (dep/maxDep)*0.35);
+  ctx.stroke();
+
+  if (dep <= 2) {
+    var lr = (12 + r()*8) * (ls||1);
+    var gr = ctx.createRadialGradient(ex,ey,0,ex,ey,lr);
+    gr.addColorStop(0,   c(pal.lf,.45));
+    gr.addColorStop(0.6, c(pal.lf,.16));
+    gr.addColorStop(1,   'rgba(0,0,0,0)');
+    ctx.beginPath();
+    for (var i=0;i<=7;i++){
+      var a=(i/7)*Math.PI*2, j=lr*(0.6+r()*0.7);
+      var px=ex+Math.cos(a)*j, py=ey+Math.sin(a)*j;
+      i===0?ctx.moveTo(px,py):ctx.lineTo(px,py);
+    }
+    ctx.closePath(); ctx.fillStyle=gr; ctx.fill();
+    ctx.strokeStyle=c(pal.rim,.2); ctx.lineWidth=0.7; ctx.stroke();
+    if (r()>0.5) {
+      ctx.beginPath();
+      ctx.arc(ex+(r()-.5)*4, ey+(r()-.5)*4, 1+r()*1.8, 0, Math.PI*2);
+      ctx.fillStyle=c(pal.dot,.65); ctx.fill();
+    }
+    return;
+  }
+
+  var sp=pal.spread, sv=sp*0.28;
+  var splits = r()>0.65?3:2;
+  if (splits===2){
+    branch(ctx,r,ex,ey,ang+(sp+r()*sv)*pal.leanL,len*(0.62+r()*.1),wid*.65,dep-1,maxDep,ls);
+    branch(ctx,r,ex,ey,ang-(sp+r()*sv)*pal.leanR,len*(0.62+r()*.1),wid*.65,dep-1,maxDep,ls);
+  } else {
+    branch(ctx,r,ex,ey,ang+sp*.88,len*.60,wid*.60,dep-1,maxDep,ls);
+    branch(ctx,r,ex,ey,ang,       len*.64,wid*.60,dep-1,maxDep,ls);
+    branch(ctx,r,ex,ey,ang-sp*.88,len*.60,wid*.60,dep-1,maxDep,ls);
+  }
+}
+
+function ambient(ctx, cx, cy, radius, alpha) {
+  var g=ctx.createRadialGradient(cx,cy,0,cx,cy,radius);
+  g.addColorStop(0, c(pal.amb,alpha));
+  g.addColorStop(1,'rgba(0,0,0,0)');
+  ctx.fillStyle=g;
+  ctx.fillRect(cx-radius,cy-radius,radius*2,radius*2);
+}
+
+function soil(ctx, cx, by, w) {
+  var g=ctx.createLinearGradient(cx-w,by,cx+w,by);
+  g.addColorStop(0,'rgba(0,0,0,0)');
+  g.addColorStop(.35,c(pal.br,.28));
+  g.addColorStop(.65,c(pal.br,.28));
+  g.addColorStop(1,'rgba(0,0,0,0)');
+  ctx.fillStyle=g; ctx.fillRect(cx-w,by,w*2,4);
+}
+
+function roots(ctx, cx, by, sc) {
+  [[Math.PI*1.22,.16,3],[Math.PI*1.78,.16,3],[Math.PI*1.5,.10,2]].forEach(function(d){
+    var a=d[0],sp=d[1],n=d[2];
+    for(var i=0;i<n;i++){
+      var ang=a+(i-(n-1)/2)*sp;
+      var len=(18+i*8)*sc;
+      var ex=cx+Math.cos(ang)*len, ey=by-Math.sin(ang)*len;
+      ctx.beginPath(); ctx.moveTo(cx,by);
+      ctx.quadraticCurveTo(cx+Math.cos(ang+.2)*len*.5,by-Math.sin(ang+.2)*len*.5,ex,ey);
+      ctx.lineWidth=(2.5-i*.5)*sc; ctx.strokeStyle=c(pal.br,.40-i*.06);
+      ctx.lineCap='round'; ctx.stroke();
+    }
+  });
+}
+
+var stages = [
+  {
+    id:'seed', nm:'种子', dy:'0 天', badge:null,
+    ds:'一粒发光种子落入土中',
+    draw: function(ctx) {
+      var cx=W/2, cy=H*.60;
+      soil(ctx,cx,cy+18,45);
+      var halo=ctx.createRadialGradient(cx,cy,3,cx,cy,26);
+      halo.addColorStop(0,c(pal.lf,.52));
+      halo.addColorStop(.5,c(pal.lf,.14));
+      halo.addColorStop(1,'rgba(0,0,0,0)');
+      ctx.beginPath(); ctx.arc(cx,cy,26,0,Math.PI*2);
+      ctx.fillStyle=halo; ctx.fill();
+      ctx.beginPath(); ctx.ellipse(cx,cy,7,10,-.15,0,Math.PI*2);
+      ctx.fillStyle=c([125,96,60],.92); ctx.fill();
+      ctx.strokeStyle=c(pal.lf,.5); ctx.lineWidth=1.2; ctx.stroke();
+      var r=rng(42);
+      for(var i=0;i<5;i++){
+        var ag=r()*Math.PI*2, d=16+r()*18;
+        ctx.beginPath(); ctx.arc(cx+Math.cos(ag)*d,cy+Math.sin(ag)*d,1+r()*1.4,0,Math.PI*2);
+        ctx.fillStyle=c(pal.dot,.3+r()*.4); ctx.fill();
+      }
+    }
+  },
+  {
+    id:'crack', nm:'破土', dy:'第 1 天', badge:'new',
+    ds:'第一个细芽，已是宽冠橡树的骨架雏形',
+    draw: function(ctx) {
+      var cx=W/2, by=H-22;
+      soil(ctx,cx,by,42); ambient(ctx,cx,by-18,28,.07);
+      var th=H*.10;
+      ctx.beginPath(); ctx.moveTo(cx,by); ctx.lineTo(cx,by-th);
+      ctx.lineWidth=3.5; ctx.strokeStyle=c(pal.br,.88); ctx.lineCap='round'; ctx.stroke();
+      var ty=by-th;
+      ctx.beginPath(); ctx.moveTo(cx,ty); ctx.lineTo(cx-9,ty-7);
+      ctx.lineWidth=1.8; ctx.strokeStyle=c(pal.br,.58); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(cx,ty); ctx.lineTo(cx+8,ty-7);
+      ctx.lineWidth=1.6; ctx.strokeStyle=c(pal.br,.52); ctx.stroke();
+      [[cx-9,ty-7],[cx+8,ty-7],[cx,ty-2]].forEach(function(p){
+        var g=ctx.createRadialGradient(p[0],p[1],0,p[0],p[1],7);
+        g.addColorStop(0,c(pal.lf,.55)); g.addColorStop(1,'rgba(0,0,0,0)');
+        ctx.beginPath(); ctx.arc(p[0],p[1],7,0,Math.PI*2);
+        ctx.fillStyle=g; ctx.fill();
+      });
+    }
+  },
+  {
+    id:'sprout', nm:'嫩芽', dy:'2 – 7 天', badge:'new',
+    ds:'depth=2，主干＋第一层分叉，叶 blob 初现',
+    draw: function(ctx) {
+      var cx=W/2, by=H-22, r=rng(3);
+      var th=H*.22;
+      soil(ctx,cx,by,46); ambient(ctx,cx,by-th*.5,42,.08);
+      ctx.beginPath(); ctx.moveTo(cx,by); ctx.lineTo(cx,by-th);
+      ctx.lineWidth=5; ctx.strokeStyle=c(pal.br,.88); ctx.lineCap='round'; ctx.stroke();
+      branch(ctx,r,cx,by-th,Math.PI/2+.40,th*.52,3.2,2,2,.45);
+      branch(ctx,r,cx,by-th,Math.PI/2-.40,th*.52,3.2,2,2,.45);
+    }
+  },
+  {
+    id:'sapling', nm:'树苗', dy:'8 – 30 天', badge:null,
+    ds:'depth=4，两主枝初现，叶片稀疏',
+    draw: function(ctx) {
+      var cx=W/2, by=H-22, r=rng(5);
+      var th=H*.32;
+      soil(ctx,cx,by,50); ambient(ctx,cx,by-th*.5,60,.08);
+      ctx.beginPath(); ctx.moveTo(cx,by); ctx.lineTo(cx,by-th);
+      ctx.lineWidth=7; ctx.strokeStyle=c(pal.br,.90); ctx.lineCap='round'; ctx.stroke();
+      branch(ctx,r,cx,by-th,Math.PI/2+.42,th*.55,4,4,4,.60);
+      branch(ctx,r,cx,by-th,Math.PI/2-.42,th*.55,4,4,4,.60);
+    }
+  },
+  {
+    id:'young', nm:'幼树', dy:'31 – 90 天', badge:null,
+    ds:'depth=5，三枝，根系初现，树冠成形',
+    draw: function(ctx) {
+      var cx=W/2, by=H-22, r=rng(7);
+      var th=H*.44;
+      soil(ctx,cx,by,54); ambient(ctx,cx,by-th*.5,75,.09);
+      roots(ctx,cx,by,.65);
+      ctx.beginPath(); ctx.moveTo(cx,by); ctx.lineTo(cx,by-th);
+      ctx.lineWidth=9; ctx.strokeStyle=c(pal.br,.92); ctx.lineCap='round'; ctx.stroke();
+      branch(ctx,r,cx,by-th,Math.PI/2+.44,th*.56,5,5,5,.80);
+      branch(ctx,r,cx,by-th,Math.PI/2-.44,th*.56,5,5,5,.80);
+      branch(ctx,r,cx,by-th*.68,Math.PI/2+.70,th*.28,3.5,3,5,.80);
+    }
+  },
+  {
+    id:'mature', nm:'茂盛', dy:'91 – 300 天', badge:null,
+    ds:'depth=7，完整宽冠橡树，四枝丫，呼吸光晕',
+    draw: function(ctx) {
+      var cx=W/2, by=H-22, r=rng(9);
+      var th=H*.56;
+      soil(ctx,cx,by,58); ambient(ctx,cx,by-th*.5,95,.10);
+      roots(ctx,cx,by,1.0);
+      ctx.beginPath(); ctx.moveTo(cx,by); ctx.lineTo(cx,by-th);
+      ctx.lineWidth=12; ctx.strokeStyle=c(pal.br,.93); ctx.lineCap='round'; ctx.stroke();
+      branch(ctx,r,cx,by-th,Math.PI/2+.45,th*.58,7.5,7,7,1.0);
+      branch(ctx,r,cx,by-th,Math.PI/2-.45,th*.58,7.5,7,7,1.0);
+      branch(ctx,r,cx,by-th*.70,Math.PI/2+.72,th*.30,5,4,7,1.0);
+      branch(ctx,r,cx,by-th*.52,Math.PI/2-.74,th*.24,4,3,7,1.0);
+    }
+  },
+  {
+    id:'ancient', nm:'参天', dy:'301 天+', badge:null,
+    ds:'depth=8，超出画布，根系粗壮，发光最强',
+    draw: function(ctx) {
+      var cx=W/2, by=H-22, r=rng(11);
+      var th=H*.66;
+      soil(ctx,cx,by,62); ambient(ctx,cx,by-th*.5,110,.13);
+      roots(ctx,cx,by,1.3);
+      ctx.beginPath(); ctx.moveTo(cx,by); ctx.lineTo(cx,by-th);
+      ctx.lineWidth=15; ctx.strokeStyle=c(pal.br,.95); ctx.lineCap='round'; ctx.stroke();
+      branch(ctx,r,cx,by-th,Math.PI/2+.47,th*.60,9,8,8,1.1);
+      branch(ctx,r,cx,by-th,Math.PI/2-.47,th*.60,9,8,8,1.1);
+      branch(ctx,r,cx,by-th*.68,Math.PI/2+.74,th*.32,6,5,8,1.1);
+      branch(ctx,r,cx,by-th*.50,Math.PI/2-.76,th*.26,5,4,8,1.1);
+    }
+  }
+];
+
+var row = document.getElementById('row');
+
+stages.forEach(function(s) {
+  var card = document.createElement('div');
+  card.className = 'card';
+
+  var cvs = document.createElement('canvas');
+  cvs.width  = W * DPR;
+  cvs.height = H * DPR;
+  cvs.style.width  = W + 'px';
+  cvs.style.height = H + 'px';
+  var ctx = cvs.getContext('2d');
+  ctx.scale(DPR, DPR);
+  ctx.clearRect(0, 0, W, H);
+  try { s.draw(ctx); } catch(e) { console.error(s.id, e); }
+  card.appendChild(cvs);
+
+  var badgeHtml = s.badge === 'new'
+    ? '<span class="badge new">新增</span><br>'
+    : '';
+
+  var info = document.createElement('div');
+  info.innerHTML = '<div class="nm">'+s.nm+'</div><div class="dy">'+s.dy+'</div>'+badgeHtml+'<div class="ds">'+s.ds+'</div>';
+  card.appendChild(info);
+
+  card.onclick = function() {
+    card.classList.toggle('sel');
+    try { fetch('/event',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({type:'click',choice:s.id,text:s.nm})}); } catch(e){}
+  };
+
+  row.appendChild(card);
+});
+</script>
+</body>
+</html>
