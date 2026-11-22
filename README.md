@@ -1,49 +1,67 @@
+<div align="center">
+
 # Daily Tree · 记忆森林
 
-每天留下一件值得记住的事，用一棵随记录生长的树回看自己的日常。个人站使用“记忆森林”作为中文展示名，早期文档也称“每日一树”。
+**每天留下一件值得记住的事，让屏幕里的小树跟着你的日常慢慢抽枝长叶。**
 
-[打开应用](https://nuts-and-bytes.github.io/daily-tree/app/) · [项目首页](https://nuts-and-bytes.github.io/daily-tree/) · [English](#english)
+<p>
+  <a href="https://nuts-and-bytes.github.io/daily-tree/app/"><strong>种一棵树 ↗</strong></a> ·
+  <a href="https://nuts-and-bytes.github.io/daily-tree/">项目介绍页</a> ·
+  <a href="#快速开始">本地运行</a> ·
+  <a href="#english">English</a>
+</p>
 
-## 可以做什么
+<br />
 
-| 功能 | 使用结果 |
-| --- | --- |
-| 每日记录 | 保存文字与图片，按日期回看过去的日常 |
-| 树木生长 | 将记录的积累呈现为树木变化 |
-| 天气效果 | 授权定位后获取天气，呈现对应的场景效果 |
-| 备份与恢复 | 导出和导入本地记录，便于自行备份 |
+<img src="screenshots/hero-forest.jpg" alt="Daily Tree 记忆森林界面一览：成长引导与繁茂树冠" width="880" />
 
-## 本地运行
+</div>
 
-需要 Python 3。静态应用不需要启动后端或安装根目录依赖。
+## 为什么做它
 
-```sh
+日记本很容易写两天就落灰，因为每天记下的细碎情绪看不到积累的形状。
+
+**Daily Tree** 想给日常一点看得见的生命力：每天只需写下一句话、贴一张图，屏幕中央的小树就会从一粒种子、嫩芽、幼苗一路长成青树与古树；打开日历与天气，翻回过去的某一天，每一片叶子背后都藏着你认真活过的日子。
+
+## 核心体验
+
+- **随记录生长的树**：Canvas 程序化有机枝干，依据累计天数解锁 6 个生长阶段（种子 → 嫩芽 → 幼苗 → 青树 → 壮年树 → 古树）。
+- **轻量图文手记**：专注当下的一句话与图片记录，打开即写，没有社交压力与复杂标签。
+- **日历与时间轴回看**：按日历或底部日期滑轨快速穿梭过去，重温当天的文字与照片。
+- **实景天气氛围**：可选授权定位，根据实时天气为夜空叠加微雨、微风等氛围效果。
+- **本地存储与导出**：免注册即用，支持随时导出与恢复本地记录。
+
+## 快速开始
+
+纯静态应用，无需安装后端依赖，使用 Python 3 即可本地预览：
+
+```bash
 git clone https://github.com/nuts-and-bytes/daily-tree.git
 cd daily-tree
 python3 -m http.server 8000
 ```
 
-打开 <http://localhost:8000/app/>；项目首页是 <http://localhost:8000/>。
+浏览器访问 <http://localhost:8000/app/>（介绍页位于 <http://localhost:8000/>）。
 
-## 数据与使用边界
+<details>
+<summary><strong>目录结构、数据与使用边界</strong></summary>
 
-- 文字记录保存在当前浏览器的 LocalStorage，图片使用 IndexedDB；没有跨设备自动同步。
-- 清除浏览器站点数据、换浏览器或更换域名会影响本地记录。现有 JSON 备份导出读取 LocalStorage，不包含 IndexedDB 中的图片，请另外保留原图。
-- 天气功能会请求定位，并向 Open-Meteo 发送坐标以获取天气；不能将本地保存日记理解为应用完全不联网。
-- 浏览器、触屏和微信内打开的实际体验需要分别验证，不承诺所有设备具有相同效果。
+<br />
 
-## 项目结构与发布
+- **核心文件**：`app/` 为当前主应用（`tree.js` 负责 Canvas 树木绘制，`db.js` 与 `image-compressor.js` 处理图片存储，`weather.js` 接入天气）；`app/webgl/` 为早期 WebGL 实验代码；部署说明见 [DEPLOYMENT.md](DEPLOYMENT.md)。
+- **数据与备份**：文字保存在浏览器 `LocalStorage`，图片保存在 `IndexedDB`，不自动跨设备同步。当前的 JSON 备份仅包含文字记录，不含 `IndexedDB` 中的图片，换设备或清理浏览器缓存前请另外保存原图。
+- **联网说明**：仅在授权天气功能时向 Open-Meteo 发送定位坐标获取天气。
+- **许可**：仓库目前未含独立 `LICENSE` 文件。
 
-- `app/`：当前应用入口；`app.js` 使用 `tree.js` 的 Canvas 树木绘制，并接入图片保存与天气逻辑。
-- `app/webgl/`：保留的 WebGL 实验代码，不等于当前 `/app/` 入口使用完整 3D 渲染。
-- `index.html`、`landing.html`：项目入口与介绍页面。
-- `screenshots/`：已有界面截图；截图可能早于当前版本。
-- [部署说明](DEPLOYMENT.md)：以当前 `pages.yml` 为依据的发布入口。
-
-当前仓库没有独立 `LICENSE` 文件，许可证待维护者明确。
+</details>
 
 ## English
 
-Daily Tree is a browser-based daily journal that turns accumulated entries into a growing tree. [Try the app](https://nuts-and-bytes.github.io/daily-tree/app/) or run `python3 -m http.server 8000` from this repository and open `/app/`.
+**Daily Tree (记忆森林)** is a minimalist, browser-based daily journal that turns your accumulated memories into a growing Canvas tree—evolving from a seed to an ancient canopy as you write and save photos day by day.
 
-Text entries use LocalStorage; images use IndexedDB. The existing JSON backup does not include IndexedDB images. There is no automatic cross-device sync. Optional weather requests send location coordinates to Open-Meteo. Browser storage can be cleared, so keep separate backups. This repository currently has no standalone LICENSE file.
+- [Open app ↗](https://nuts-and-bytes.github.io/daily-tree/app/) · [Landing page ↗](https://nuts-and-bytes.github.io/daily-tree/)
+- Run locally: `python3 -m http.server 8000` and open `/app/`. Entries live locally in your browser (LocalStorage for text, IndexedDB for images), with optional weather atmosphere powered by Open-Meteo.
+
+---
+
+<p align="center">made by <a href="https://heystone.site/">stone</a> · 为 AI 世界留一点人味</p>
