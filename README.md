@@ -51,7 +51,7 @@ python3 -m http.server 8000
 - **核心文件**：`app/` 为当前主应用（`tree.js` 负责 Canvas 树木绘制，`db.js` 与 `image-compressor.js` 处理图片存储，`weather.js` 接入天气）；`app/webgl/` 为早期 WebGL 实验代码；部署说明见 [DEPLOYMENT.md](DEPLOYMENT.md)。
 - **数据与备份**：文字保存在浏览器 `LocalStorage`，图片保存在 `IndexedDB`，不自动跨设备同步。当前的 JSON 备份仅包含文字记录，不含 `IndexedDB` 中的图片，换设备或清理浏览器缓存前请另外保存原图。
 - **联网说明**：仅在授权天气功能时向 Open-Meteo 发送定位坐标获取天气。
-- **许可**：仓库目前未含独立 `LICENSE` 文件。
+- **许可**：采用 [MIT License](LICENSE)。
 
 </details>
 
